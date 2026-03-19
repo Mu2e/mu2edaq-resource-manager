@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mu2e DAQ Resource Manager</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="logo">&#9632;</span>
+        <h1>Mu2e DAQ Resource Manager</h1>
+      </div>
+      <div class="status-row">
+        <span class="badge badge-total">Total <span id="badge-total">—</span></span>
+        <span class="badge badge-available">Available <span id="badge-available">—</span></span>
+        <span class="badge badge-reserved">Reserved <span id="badge-reserved">—</span></span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <label for="filter-select">Filter:</label>
+        <select id="filter-select" onchange="loadResources()">
+          <option value="">All</option>
+          <option value="available">Available</option>
+          <option value="reserved">Reserved</option>
+        </select>
+
+        <label for="client-id-input">Client&nbsp;ID:</label>
+        <input id="client-id-input" type="text" placeholder="my-client" value="web-client" />
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-secondary" onclick="refresh()">&#8635; Refresh</button>
+        <label class="toggle-label">
+          <input type="checkbox" id="auto-refresh-chk" checked onchange="toggleAutoRefresh()" />
+          Auto-refresh (5s)
+        </label>
+      </div>
+    </div>
+
+    <div id="flash" class="flash" role="alert" style="display:none"></div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Name</th>
+            <th>#</th>
+            <th>Node</th>
+            <th>User</th>
+            <th>Ports</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="resources-tbody">
+          <tr><td colspan="9" class="cell-center cell-muted">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <span>Mu2e Experiment — Fermi National Accelerator Laboratory</span>
+    <span id="last-updated"></span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

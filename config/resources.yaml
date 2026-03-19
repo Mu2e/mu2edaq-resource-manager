@@ -1,0 +1,83 @@
+# Mu2e DAQ Resource Manager - Resource Configuration
+# Each resource has a class, name, enumerator, and location (node, user, ports)
+
+resources:
+  - class: DTC
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2edaq01.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: DTC
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2edaq01.fnal.gov
+      user: mu2edaq
+      ports: [2003, 2004, 2005]
+
+  - class: DTC
+    name: DTC
+    enumerator: "03"
+    location:
+      node: mu2edaq02.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CFO
+    name: CFO
+    enumerator: "01"
+    location:
+      node: mu2edaq01.fnal.gov
+      user: mu2edaq
+      ports: [3000, 3001]
+
+  - class: CFO
+    name: CFO
+    enumerator: "02"
+    location:
+      node: mu2edaq02.fnal.gov
+      user: mu2edaq
+      ports: [3000, 3001]
+
+  - class: ROC
+    name: ROC
+    enumerator: "01"
+    location:
+      node: mu2edaq01.fnal.gov
+      user: mu2edaq
+      ports: [4000, 4001]
+
+  - class: ROC
+    name: ROC
+    enumerator: "02"
+    location:
+      node: mu2edaq01.fnal.gov
+      user: mu2edaq
+      ports: [4002, 4003]
+
+  - class: ROC
+    name: ROC
+    enumerator: "03"
+    location:
+      node: mu2edaq02.fnal.gov
+      user: mu2edaq
+      ports: [4000, 4001]
+
+  - class: EventBuilder
+    name: EB
+    enumerator: "01"
+    location:
+      node: mu2edaq03.fnal.gov
+      user: mu2edaq
+      ports: [5000, 5001, 5002, 5003]
+
+  - class: EventBuilder
+    name: EB
+    enumerator: "02"
+    location:
+      node: mu2edaq03.fnal.gov
+      user: mu2edaq
+      ports: [5004, 5005, 5006, 5007]
