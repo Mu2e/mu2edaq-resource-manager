@@ -1,0 +1,77 @@
+.TH DEMO_CLIENT.PY 1 "2026-03-19" "1.0.0" "Mu2e DAQ"
+.SH NAME
+demo_client.py \- Python demonstration client for the Mu2e DAQ resource manager
+.SH SYNOPSIS
+.B python3 client/demo_client.py
+.RI [ BASE_URL ]
+.SH DESCRIPTION
+.B demo_client.py
+is a Python script that exercises the full client workflow of the
+Mu2e DAQ resource manager.
+It is the Python counterpart of
+.BR rm\-demo (1)
+and serves as both a verification tool and a usage example for the
+resource manager HTTP API.
+.PP
+The demo connects to the server and walks through the following steps:
+.IP 1. 4
+Check server status.
+.IP 2.
+List all resources.
+.IP 3.
+List available resources.
+.IP 4.
+Reserve up to two available resources using client ID
+.BR python-demo-client .
+.IP 5.
+Attempt a conflicting reservation from
+.B another-client
+(expected to return HTTP 409).
+.IP 6.
+Attempt to reserve a non-existent resource
+.RB ( BOGUS:FAKE:99 )
+(expected to return HTTP 409).
+.IP 7.
+Display the current mixed state of all resources.
+.IP 8.
+Release the resources reserved in step 4.
+.IP 9.
+Display the final resource state and server summary.
+.PP
+Each step is printed with a numbered header.
+Expected errors (steps 5 and 6) are labelled and do not cause the script
+to exit with a non-zero status.
+.SH ARGUMENTS
+.TP
+.I BASE_URL
+Base URL of the resource manager server, e.g.\&
+.BR http://mu2edaq01.fnal.gov:8080 .
+Default:
+.BR http://localhost:8080 .
+.SH EXIT STATUS
+.TP
+.B 0
+Demo completed successfully.
+.TP
+.B 1
+Cannot connect to the server, or an unexpected reservation failure occurred.
+.SH EXAMPLES
+Run against the default local server:
+.PP
+.RS
+.nf
+python3 client/demo_client.py
+.fi
+.RE
+.PP
+Run against a remote server:
+.PP
+.RS
+.nf
+python3 client/demo_client.py http://mu2edaq01.fnal.gov:8080
+.fi
+.RE
+.SH SEE ALSO
+.BR rm_cli.py (1),
+.BR rm\-demo (1),
+.BR mu2edaq\-resource\-manager (8)

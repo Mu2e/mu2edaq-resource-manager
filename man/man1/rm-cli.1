@@ -1,0 +1,157 @@
+.TH RM\-CLI 1 "2026-03-19" "1.0.0" "Mu2e DAQ"
+.SH NAME
+rm\-cli \- C++ command-line interface for the Mu2e DAQ resource manager
+.SH SYNOPSIS
+.B rm\-cli
+.RB [ \-\-host
+.IR HOST ]
+.RB [ \-\-port
+.IR PORT ]
+.I COMMAND
+.RI [ args... ]
+.SH DESCRIPTION
+.B rm\-cli
+is a compiled C++ command-line client for the Mu2e DAQ resource manager
+server.
+It provides the same subcommands as the Python
+.BR rm_cli.py (1)
+client and is suitable for use in contexts where Python is unavailable or
+a statically linked binary is preferred.
+.PP
+The client communicates with the server over HTTP using libcurl and parses
+JSON responses using nlohmann/json.
+Resources are identified by a three-part key:
+.IR class \ name \ enumerator
+(e.g.,
+.BR "DTC DTC 01" ).
+When reserving or releasing multiple resources, triples are given
+consecutively on the command line.
+.SH OPTIONS
+.TP
+.BI \-\-host " HOST"
+Resource manager server hostname or IP address.
+Default:
+.BR localhost .
+.TP
+.BI \-\-port " PORT"
+Resource manager server port.
+Default:
+.BR 8080 .
+.SH COMMANDS
+.TP
+.B list
+List all known resources.
+.RS
+.TP
+.B \-\-status available|reserved
+Filter output to only resources with the given status.
+.RE
+.TP
+.BI "get " "CLASS NAME ENUM"
+Display a single resource identified by its class, name, and enumerator.
+Exits with status 1 if the resource does not exist.
+.TP
+.BI "reserve " "CLIENT_ID CLASS NAME ENUM " [CLASS NAME ENUM...]
+Reserve one or more resources for
+.IR CLIENT_ID .
+Resources are specified as consecutive triples.
+The operation is all-or-nothing: if any resource is already reserved or
+does not exist, no resources are reserved and the command exits with status 1.
+Conflicting resources are displayed on failure.
+.TP
+.BI "release " "CLIENT_ID CLASS NAME ENUM " [CLASS NAME ENUM...]
+Release one or more resources currently held by
+.IR CLIENT_ID .
+The operation is all-or-nothing.
+Exits with status 1 if any resource is not reserved by
+.IR CLIENT_ID .
+.TP
+.BI "release\-all " CLIENT_ID
+Release every resource currently held by
+.IR CLIENT_ID .
+Reports the number of resources released.
+.TP
+.B status
+Display a summary of total, available, and reserved resource counts.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Command error (resource conflict, not found, argument error, server
+unreachable, etc.).
+.SH BUILDING
+.B rm\-cli
+is built with CMake alongside the
+.B librmclient
+static library:
+.PP
+.RS
+.nf
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+.fi
+.RE
+.PP
+Dependencies: libcurl (system), nlohmann/json (fetched automatically).
+.SH EXAMPLES
+List all resources:
+.PP
+.RS
+.nf
+rm-cli list
+.fi
+.RE
+.PP
+List only reserved resources:
+.PP
+.RS
+.nf
+rm-cli list --status reserved
+.fi
+.RE
+.PP
+Query a specific resource:
+.PP
+.RS
+.nf
+rm-cli get DTC DTC 01
+.fi
+.RE
+.PP
+Reserve a DTC and a CFO together:
+.PP
+.RS
+.nf
+rm-cli reserve my-client DTC DTC 01 CFO CFO 01
+.fi
+.RE
+.PP
+Release a specific resource:
+.PP
+.RS
+.nf
+rm-cli release my-client DTC DTC 01
+.fi
+.RE
+.PP
+Release all resources held by a client:
+.PP
+.RS
+.nf
+rm-cli release-all my-client
+.fi
+.RE
+.PP
+Connect to a remote server:
+.PP
+.RS
+.nf
+rm-cli --host mu2edaq01.fnal.gov --port 8080 status
+.fi
+.RE
+.SH SEE ALSO
+.BR rm_cli.py (1),
+.BR rm\-demo (1),
+.BR mu2edaq\-resource\-manager (8)

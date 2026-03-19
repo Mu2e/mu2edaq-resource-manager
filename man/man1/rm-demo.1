@@ -1,0 +1,92 @@
+.TH RM\-DEMO 1 "2026-03-19" "1.0.0" "Mu2e DAQ"
+.SH NAME
+rm\-demo \- C++ demonstration client for the Mu2e DAQ resource manager
+.SH SYNOPSIS
+.B rm\-demo
+.RI [ HOST
+.RI [ PORT ]]
+.SH DESCRIPTION
+.B rm\-demo
+is a compiled C++ program that exercises the full client workflow of the
+Mu2e DAQ resource manager.
+It is intended as a verification tool and usage example for the
+.B librmclient
+C++ library.
+.PP
+The demo walks through the following steps in sequence:
+.IP 1. 4
+Check server status.
+.IP 2.
+List all resources.
+.IP 3.
+List available resources.
+.IP 4.
+Reserve up to two available resources using client ID
+.BR cpp-demo-client .
+.IP 5.
+Attempt a conflicting reservation from
+.B another-client
+(expected to fail with a conflict error).
+.IP 6.
+Attempt to reserve a non-existent resource
+.RB ( BOGUS:FAKE:99 )
+(expected to fail with a not-found error).
+.IP 7.
+Display the current mixed state of all resources.
+.IP 8.
+Release the resources reserved in step 4.
+.IP 9.
+Display the final resource state and confirm all resources are available.
+.PP
+Each step is printed with a numbered header.
+Expected errors (steps 5 and 6) are clearly labelled and do not cause
+the demo to exit with a non-zero status.
+.SH ARGUMENTS
+.TP
+.I HOST
+Hostname or IP address of the resource manager server.
+Default:
+.BR localhost .
+.TP
+.I PORT
+TCP port of the resource manager server.
+Default:
+.BR 8080 .
+.SH EXIT STATUS
+.TP
+.B 0
+Demo completed successfully.
+.TP
+.B 1
+Cannot reach the server, or an unexpected failure occurred during
+reservation or release.
+.SH BUILDING
+.B rm\-demo
+is built with CMake:
+.PP
+.RS
+.nf
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+.fi
+.RE
+.SH EXAMPLES
+Run against the default local server:
+.PP
+.RS
+.nf
+rm-demo
+.fi
+.RE
+.PP
+Run against a remote server:
+.PP
+.RS
+.nf
+rm-demo mu2edaq01.fnal.gov 8080
+.fi
+.RE
+.SH SEE ALSO
+.BR rm\-cli (1),
+.BR demo_client.py (1),
+.BR mu2edaq\-resource\-manager (8)

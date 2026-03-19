@@ -1,0 +1,156 @@
+.TH MU2EDAQ\-RESOURCE\-MANAGER 8 "2026-03-19" "1.0.0" "Mu2e DAQ"
+.SH NAME
+mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
+.SH SYNOPSIS
+.B python3 server/app.py
+.RB [ \-\-host
+.IR HOST ]
+.RB [ \-\-port
+.IR PORT ]
+.RB [ \-\-config
+.IR FILE ]
+.RB [ \-\-state
+.IR FILE ]
+.PP
+.B scripts/start_server.sh
+.SH DESCRIPTION
+.B mu2edaq\-resource\-manager
+is a FastAPI-based HTTP server that manages hardware resource reservations
+for the Mu2e data acquisition system at Fermilab.
+It tracks shared DAQ hardware (DTCs, CFOs, ROCs, EventBuilders) distributed
+across multiple nodes and provides an atomic reserve/release API so that
+multiple DAQ processes can coordinate exclusive access without conflicts.
+.PP
+Resources are defined statically in a YAML configuration file.
+Reservation state is persisted to a JSON file and restored on restart,
+so in-progress reservations survive server restarts.
+.PP
+All reservation operations are all-or-nothing: if any resource in a request
+is unavailable or does not exist, the entire request is rejected and no
+resources are modified.
+.PP
+A web UI is served at
+.B /
+when the
+.I web/
+directory is present.
+Interactive API documentation (Swagger UI) is available at
+.BR /docs .
+.SH OPTIONS
+.TP
+.BI \-\-host " HOST"
+IP address or hostname to bind.
+Default:
+.B 0.0.0.0
+(all interfaces).
+.TP
+.BI \-\-port " PORT"
+TCP port to listen on.
+Default:
+.BR 8080 .
+.TP
+.BI \-\-config " FILE"
+Path to the YAML resource configuration file.
+Default:
+.IR config/resources.yaml .
+Can also be set via the
+.B RM_CONFIG
+environment variable.
+.TP
+.BI \-\-state " FILE"
+Path to the JSON state file used to persist reservation state across restarts.
+Default:
+.IR config/state.json .
+Can also be set via the
+.B RM_STATE
+environment variable.
+.SH ENVIRONMENT
+.TP
+.B RM_HOST
+Default bind host (overridden by
+.BR \-\-host ).
+.TP
+.B RM_PORT
+Default bind port (overridden by
+.BR \-\-port ).
+.TP
+.B RM_CONFIG
+Default config file path (overridden by
+.BR \-\-config ).
+.TP
+.B RM_STATE
+Default state file path (overridden by
+.BR \-\-state ).
+.SH API ENDPOINTS
+.TP
+.B GET /api/resources
+List all resources.
+Accepts an optional
+.B ?status=available|reserved
+query parameter.
+.TP
+.B GET /api/resources/{class}/{name}/{enum}
+Get a specific resource by its three-part identifier.
+Returns 404 if not found.
+.TP
+.B POST /api/reserve
+Reserve one or more resources for a client.
+Body: JSON object with
+.B client_id
+(string) and
+.B resources
+(array of
+.BR {resource_class,\ name,\ enumerator} ).
+Returns 409 if any resource is unavailable.
+.TP
+.B POST /api/release
+Release one or more resources owned by a client.
+Body: same structure as
+.BR /api/reserve .
+Returns 400 if a resource is not reserved or is owned by a different client.
+.TP
+.B DELETE /api/clients/{client_id}/resources
+Release all resources currently held by
+.IR client_id .
+.TP
+.B GET /api/status
+Return a summary with total, available, and reserved resource counts.
+.SH FILES
+.TP
+.I config/resources.yaml
+Static hardware resource definitions.
+Edit to add or remove resources; restart the server to apply changes.
+.TP
+.I config/state.json
+Persistent reservation state.
+Written atomically via a temporary file.
+Do not edit by hand.
+.SH EXAMPLES
+Start with defaults:
+.PP
+.RS
+.nf
+./scripts/start_server.sh
+.fi
+.RE
+.PP
+Start on a specific interface and port:
+.PP
+.RS
+.nf
+python3 server/app.py --host 127.0.0.1 --port 9090
+.fi
+.RE
+.PP
+Start with a custom config:
+.PP
+.RS
+.nf
+RM_CONFIG=/etc/mu2edaq/resources.yaml ./scripts/start_server.sh
+.fi
+.RE
+.SH SEE ALSO
+.BR rm\-cli (1),
+.BR rm_cli.py (1),
+.BR rm\-demo (1),
+.BR demo_client.py (1)
