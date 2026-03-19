@@ -1,0 +1,42 @@
+{
+  "DTC:DTC:01": {
+    "status": "reserved",
+    "owner": "partition1"
+  },
+  "DTC:DTC:02": {
+    "status": "reserved",
+    "owner": "partition1"
+  },
+  "DTC:DTC:03": {
+    "status": "reserved",
+    "owner": "partition1"
+  },
+  "CFO:CFO:01": {
+    "status": "available",
+    "owner": null
+  },
+  "CFO:CFO:02": {
+    "status": "available",
+    "owner": null
+  },
+  "ROC:ROC:01": {
+    "status": "reserved",
+    "owner": "andrew"
+  },
+  "ROC:ROC:02": {
+    "status": "reserved",
+    "owner": "andrew"
+  },
+  "ROC:ROC:03": {
+    "status": "available",
+    "owner": null
+  },
+  "EventBuilder:EB:01": {
+    "status": "available",
+    "owner": null
+  },
+  "EventBuilder:EB:02": {
+    "status": "available",
+    "owner": null
+  }
+}

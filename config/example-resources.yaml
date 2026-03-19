@@ -2,15 +2,14 @@
 # Each resource has a class, name, enumerator, and location (node, user, ports)
 
 resources:
-  - class: CALO1
+  - class: CALO-1
     name: DTC
     enumerator: "01"
     location:
       node: mu2ecalo01.fnal.gov
       user: mu2edaq
       ports: [2000, 2001, 2002]
-
-  - class: CALO1
+ - class: CALO-1
     name: DTC
     enumerator: "02"
     location:
@@ -18,7 +17,7 @@ resources:
       user: mu2edaq
       ports: [2000, 2001, 2002]
 
-  - class: CALO2
+  - class: CALO-2
     name: DTC
     enumerator: "01"
     location:
@@ -26,7 +25,7 @@ resources:
       user: mu2edaq
       ports: [2003, 2004, 2005]
 
-  - class: CALO2
+  - class: CALO-2
     name: DTC
     enumerator: "02"
     location:
@@ -50,38 +49,35 @@ resources:
       user: mu2edaq
       ports: [3000, 3001]
 
-  - class: CALO1
+  - class: CALO-1
     name: ROC
     enumerator: "01"
     location:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
-  - class: CALO1
+  - class: CALO-1
     name: ROC
     enumerator: "02"
     location:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
-
-  - class: CALO1
+  - class: CALO-1
     name: ROC
     enumerator: "03"
     location:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
-
-  - class: CALO1
+  - class: CALO-1
     name: ROC
     enumerator: "04"
     location:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
-
-  - class: CALO1
+  - class: CALO-1
     name: ROC
     enumerator: "05"
     location:

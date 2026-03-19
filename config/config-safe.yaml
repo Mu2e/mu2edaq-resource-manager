@@ -2,35 +2,27 @@
 # Each resource has a class, name, enumerator, and location (node, user, ports)
 
 resources:
-  - class: CALO1
+  - class: DTC
     name: DTC
     enumerator: "01"
     location:
-      node: mu2ecalo01.fnal.gov
+      node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [2000, 2001, 2002]
 
-  - class: CALO1
+  - class: DTC
     name: DTC
     enumerator: "02"
     location:
-      node: mu2ecalo01.fnal.gov
-      user: mu2edaq
-      ports: [2000, 2001, 2002]
-
-  - class: CALO2
-    name: DTC
-    enumerator: "01"
-    location:
-      node: mu2ecalo02.fnal.gov
+      node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [2003, 2004, 2005]
 
-  - class: CALO2
+  - class: DTC
     name: DTC
-    enumerator: "02"
+    enumerator: "03"
     location:
-      node: mu2ecalo02.fnal.gov
+      node: mu2edaq02.fnal.gov
       user: mu2edaq
       ports: [2000, 2001, 2002]
 
@@ -38,7 +30,7 @@ resources:
     name: CFO
     enumerator: "01"
     location:
-      node: mu2ecfo01.fnal.gov
+      node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [3000, 3001]
 
@@ -46,62 +38,31 @@ resources:
     name: CFO
     enumerator: "02"
     location:
-      node: mu2ecfo02.fnal.gov
+      node: mu2edaq02.fnal.gov
       user: mu2edaq
       ports: [3000, 3001]
 
-  - class: CALO1
+  - class: ROC
     name: ROC
     enumerator: "01"
     location:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
-  - class: CALO1
+
+  - class: ROC
     name: ROC
     enumerator: "02"
     location:
       node: mu2edaq01.fnal.gov
-      user: mu2edaq
-      ports: [4000, 4001]
-
-  - class: CALO1
-    name: ROC
-    enumerator: "03"
-    location:
-      node: mu2edaq01.fnal.gov
-      user: mu2edaq
-      ports: [4000, 4001]
-
-  - class: CALO1
-    name: ROC
-    enumerator: "04"
-    location:
-      node: mu2edaq01.fnal.gov
-      user: mu2edaq
-      ports: [4000, 4001]
-
-  - class: CALO1
-    name: ROC
-    enumerator: "05"
-    location:
-      node: mu2edaq01.fnal.gov
-      user: mu2edaq
-      ports: [4000, 4001]
-
-  - class: TRK
-    name: ROC
-    enumerator: "01"
-    location:
-      node: mu2etrk01.fnal.gov
       user: mu2edaq
       ports: [4002, 4003]
 
-  - class: TRK
+  - class: ROC
     name: ROC
-    enumerator: "02"
+    enumerator: "03"
     location:
-      node: mu2etrk02.fnal.gov
+      node: mu2edaq02.fnal.gov
       user: mu2edaq
       ports: [4000, 4001]
 
