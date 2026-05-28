@@ -38,7 +38,7 @@ case "${RM_DAEMON:-0}" in
     1|true|TRUE|yes|YES|on|ON) DAEMON=1 ;;
 esac
 
-# Pull -d/--daemon out of the argument list; forward everything else to app.py.
+# Pull -d/--daemon out of the argument list; forward everything else to the server.
 ARGS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -72,7 +72,7 @@ if [ "$DAEMON" -eq 1 ]; then
     echo "  PID:    $PIDFILE"
     echo "  Log:    $LOGFILE"
     echo ""
-    nohup "$VENV_PY" "$PROJECT_DIR/server/app.py" \
+    nohup "$VENV_PY" "$PROJECT_DIR/server/mu2e-resource-manager.py" \
         --host "$HOST" \
         --port "$PORT" \
         --config "$CONFIG" \
@@ -84,7 +84,7 @@ if [ "$DAEMON" -eq 1 ]; then
 else
     echo "  Mode:   foreground"
     echo ""
-    exec "$VENV_PY" "$PROJECT_DIR/server/app.py" \
+    exec "$VENV_PY" "$PROJECT_DIR/server/mu2e-resource-manager.py" \
         --host "$HOST" \
         --port "$PORT" \
         --config "$CONFIG" \

@@ -2,7 +2,7 @@
 .SH NAME
 mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
 .SH SYNOPSIS
-.B python3 server/app.py
+.B python3 server/mu2e\-resource\-manager.py
 .RB [ \-\-host
 .IR HOST ]
 .RB [ \-\-port
@@ -14,7 +14,7 @@ mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
 .PP
 .B scripts/start_server.sh
 .RB [ \-d | \-\-daemon ]
-.RI [ "app.py options" ]
+.RI [ "server options" ]
 .PP
 .B scripts/stop_server.sh
 .SH DESCRIPTION
@@ -57,7 +57,7 @@ and output is redirected to a log file (default
 .IR run/resource-manager.log ).
 Starting a second daemon while one is already running is refused.
 Any further arguments are forwarded to
-.B server/app.py
+.B server/mu2e\-resource\-manager.py
 and override the environment-derived values.
 .PP
 The
@@ -248,7 +248,7 @@ Start on a specific interface and port:
 .PP
 .RS
 .nf
-python3 server/app.py --host 127.0.0.1 --port 9090
+python3 server/mu2e-resource-manager.py --host 127.0.0.1 --port 9090
 .fi
 .RE
 .PP

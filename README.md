@@ -111,7 +111,7 @@ In daemon mode the PID is written to `run/resource-manager.pid` and output is lo
 
 The stop script sends `SIGTERM` for a graceful shutdown and escalates to `SIGKILL` if the process has not exited within `RM_STOP_TIMEOUT` seconds (default 10), then removes the PID file.
 
-Any extra arguments to the start script are forwarded to `server/app.py` and override the environment-derived values (commandline wins):
+Any extra arguments to the start script are forwarded to `server/mu2e-resource-manager.py` and override the environment-derived values (commandline wins):
 
 ```bash
 ./scripts/start_server.sh --port 9000
@@ -120,7 +120,7 @@ Any extra arguments to the start script are forwarded to `server/app.py` and ove
 You can also run the server module directly:
 
 ```bash
-python3 server/app.py --host 0.0.0.0 --port 8080 \
+python3 server/mu2e-resource-manager.py --host 0.0.0.0 --port 8080 \
     --config config/resources.yaml \
     --state config/state.json
 ```
