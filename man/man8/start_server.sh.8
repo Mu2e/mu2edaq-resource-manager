@@ -1,0 +1,166 @@
+.TH START_SERVER.SH 8 "2026-05-28" "1.0.0" "Mu2e DAQ"
+.SH NAME
+start_server.sh \- start the Mu2e DAQ resource manager server
+.SH SYNOPSIS
+.B scripts/start_server.sh
+.RB [ \-d | \-\-daemon ]
+.RB [ \-h | \-\-help ]
+.RI [ "server options" ]
+.SH DESCRIPTION
+.B start_server.sh
+launches the Mu2e DAQ resource manager server using the project's Python
+virtual environment.
+By default the server runs in the foreground and is stopped with Ctrl-C.
+With
+.B \-d
+or
+.B \-\-daemon
+(or
+.BR RM_DAEMON )
+the server is detached and runs in the background: its PID is written to a PID
+file and its output is redirected to a log file, both under
+.BR RM_RUN_DIR .
+Starting a second daemon while one is already running is refused.
+.PP
+Any arguments other than the options below are forwarded to the server
+.RB ( server/mu2e\-resource\-manager.py )
+and override the environment-derived values, so the priority is
+commandline over environment over
+.IR .env .
+Arguments following a
+.B \-\-
+separator are forwarded verbatim, which is the way to reach server options
+that clash with this wrapper's own (for example
+.BR \-\-help ).
+.PP
+The virtual environment must already exist; run
+.BR bootstrap.sh (1)
+first.
+The script reads a
+.I .env
+file in the project root when present (see
+.BR ENVIRONMENT ).
+A daemon-mode server is stopped with
+.BR stop_server.sh (8).
+.SH OPTIONS
+.TP
+.BR \-d ", " \-\-daemon
+Run as a background daemon. Writes a PID file and log under
+.B RM_RUN_DIR
+and refuses to start if a daemon is already running.
+Equivalent to setting
+.BR RM_DAEMON=1 .
+.TP
+.BR \-h ", " \-\-help
+Print a usage summary and exit. Works even before the virtual environment
+has been created.
+.SH ENVIRONMENT
+.TP
+.B RM_HOST
+Bind host. Default:
+.BR 0.0.0.0 .
+.TP
+.B RM_PORT
+Bind port. Default:
+.BR 8080 .
+.TP
+.B RM_CONFIG
+Resource definition YAML. Default:
+.IR config/resources.yaml .
+.TP
+.B RM_STATE
+Reservation state JSON. Default:
+.IR config/state.json .
+.TP
+.B RM_DAEMON
+Start in daemon mode when set to a truthy value (1, true, yes, on).
+.TP
+.B RM_RUN_DIR
+Directory for the daemon PID file and log. Default:
+.IR run/ .
+.TP
+.B RM_PIDFILE
+Daemon PID file path. Default:
+.IR $RM_RUN_DIR/resource-manager.pid .
+.TP
+.B RM_LOG
+Daemon log file path. Default:
+.IR $RM_RUN_DIR/resource-manager.log .
+.TP
+.B RM_VENV
+Python virtual environment directory. Default:
+.IR venv/ .
+.TP
+.B RM_ENV_FILE
+Path to the
+.I .env
+file read for the variables above. Default:
+.I .env
+in the project root.
+A variable already set in the environment is not overridden by
+.IR .env .
+.SH FILES
+.TP
+.I venv/
+Virtual environment whose interpreter runs the server.
+.TP
+.I run/resource-manager.pid
+PID file written in daemon mode.
+.TP
+.I run/resource-manager.log
+Captured stdout/stderr of the daemon-mode server.
+.TP
+.I .env
+Optional environment overrides read at startup.
+.SH EXIT STATUS
+.TP
+.B 0
+Daemon started successfully. In foreground mode the script replaces itself
+with the server process, so its exit status is the server's.
+.TP
+.B 1
+The virtual environment was not found, or a daemon is already running.
+.SH EXAMPLES
+Start in the foreground:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh
+.fi
+.RE
+.PP
+Start as a background daemon:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh --daemon
+.fi
+.RE
+.PP
+Override the port via a forwarded flag:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh --port 9000
+.fi
+.RE
+.PP
+Start with a custom config:
+.PP
+.RS
+.nf
+RM_CONFIG=/etc/mu2edaq/resources.yaml ./scripts/start_server.sh
+.fi
+.RE
+.PP
+Show the server's own options:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh -- --help
+.fi
+.RE
+.SH SEE ALSO
+.BR stop_server.sh (8),
+.BR bootstrap.sh (1),
+.BR mu2edaq\-resource\-manager (8)
