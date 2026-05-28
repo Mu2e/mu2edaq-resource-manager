@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 
 
@@ -26,13 +26,15 @@ class ResourceIdentifier(BaseModel):
 
 
 class ReservationRequest(BaseModel):
-    client_id: str
-    resources: List[ResourceIdentifier]
+    # client_id is accepted for backward compatibility but ignored: the owner
+    # is the authenticated principal. See server auth.
+    client_id: Optional[str] = None
+    resources: List[ResourceIdentifier] = Field(..., min_length=1)
 
 
 class ReleaseRequest(BaseModel):
-    client_id: str
-    resources: List[ResourceIdentifier]
+    client_id: Optional[str] = None
+    resources: List[ResourceIdentifier] = Field(..., min_length=1)
 
 
 class ServerStatus(BaseModel):

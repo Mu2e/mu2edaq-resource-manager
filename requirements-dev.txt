@@ -1,0 +1,4 @@
+# Development/test dependencies (in addition to requirements.txt).
+#   venv/bin/pip install -r requirements-dev.txt
+pytest>=7.0
+httpx>=0.24

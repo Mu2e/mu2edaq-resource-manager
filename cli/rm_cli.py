@@ -2,6 +2,7 @@
 """Mu2e DAQ Resource Manager — Command Line Interface"""
 
 import argparse
+import os
 import sys
 
 import requests
@@ -45,8 +46,9 @@ def _print_resource(r: dict):
 
 
 class CLI:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, token: str = None):
         self.base = f"http://{host}:{port}"
+        self._headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     def _get(self, path, params=None):
         r = requests.get(f"{self.base}{path}", params=params, timeout=10)
@@ -54,10 +56,10 @@ class CLI:
         return r.json()
 
     def _post(self, path, payload):
-        return requests.post(f"{self.base}{path}", json=payload, timeout=10)
+        return requests.post(f"{self.base}{path}", json=payload, headers=self._headers, timeout=10)
 
     def _delete(self, path):
-        r = requests.delete(f"{self.base}{path}", timeout=10)
+        r = requests.delete(f"{self.base}{path}", headers=self._headers, timeout=10)
         r.raise_for_status()
         return r.json()
 
@@ -166,6 +168,11 @@ Examples:
     )
     parser.add_argument("--host", default="localhost", help="Server host (default: localhost)")
     parser.add_argument("--port", type=int, default=8080, help="Server port (default: 8080)")
+    parser.add_argument(
+        "--token",
+        default=os.environ.get("RM_TOKEN"),
+        help="Bearer token for reserve/release (or set RM_TOKEN)",
+    )
 
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
     sub.required = True
@@ -199,7 +206,7 @@ Examples:
     sub.add_parser("status", help="Show server status")
 
     args = parser.parse_args()
-    cli = CLI(args.host, args.port)
+    cli = CLI(args.host, args.port, token=args.token)
 
     dispatch = {
         "list": cli.cmd_list,

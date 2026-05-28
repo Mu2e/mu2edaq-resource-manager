@@ -34,21 +34,23 @@ Run "python3 server/mu2e-resource-manager.py --help" (or pass them after a
 "--") to see the full list of server options.
 
 Environment variables (may also be set in a .env file at the project root):
-  RM_HOST        Bind host (default: 0.0.0.0)
-  RM_PORT        Bind port (default: 8080)
-  RM_CONFIG      Resource definition YAML (default: config/resources.yaml)
-  RM_STATE       Reservation state JSON (default: config/state.json)
-  RM_DAEMON      Start in daemon mode when truthy (1/true/yes/on)
-  RM_RUN_DIR     Directory for the pidfile and log (default: run/)
-  RM_PIDFILE     PID file path (default: \$RM_RUN_DIR/resource-manager.pid)
-  RM_LOG         Daemon log file (default: \$RM_RUN_DIR/resource-manager.log)
-  RM_VENV        Virtual environment directory (default: venv/)
+  RM_HOST          Bind host (default: 127.0.0.1; set 0.0.0.0 to expose on all interfaces)
+  RM_PORT          Bind port (default: 8080)
+  RM_CONFIG        Resource definition YAML (default: config/resources.yaml)
+  RM_STATE         Reservation state JSON (default: config/state.json)
+  RM_AUTH_CONFIG   Auth token YAML (default: config/auth.yaml)
+  RM_AUTH_DISABLED Disable auth when truthy (trusted/local use only)
+  RM_DAEMON        Start in daemon mode when truthy (1/true/yes/on)
+  RM_RUN_DIR       Directory for the pidfile and log (default: run/)
+  RM_PIDFILE       PID file path (default: \$RM_RUN_DIR/resource-manager.pid)
+  RM_LOG           Daemon log file (default: \$RM_RUN_DIR/resource-manager.log)
+  RM_VENV          Virtual environment directory (default: venv/)
 
 Stop a daemon-mode server with scripts/stop_server.sh.
 EOF
 }
 
-HOST="${RM_HOST:-0.0.0.0}"
+HOST="${RM_HOST:-127.0.0.1}"
 PORT="${RM_PORT:-8080}"
 CONFIG="${RM_CONFIG:-$PROJECT_DIR/config/resources.yaml}"
 STATE="${RM_STATE:-$PROJECT_DIR/config/state.json}"

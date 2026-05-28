@@ -5,7 +5,7 @@ import argparse
 import os
 import sys
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
@@ -14,11 +14,13 @@ from typing import List, Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from models import Resource, ResourceIdentifier, ReservationRequest, ReleaseRequest, ServerStatus
 from resource_manager import ResourceManager
+from auth import Principal, configure_auth, require_principal, truthy
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _WEB_DIR = os.path.join(_HERE, "..", "web")
 _DEFAULT_CONFIG = os.path.join(_HERE, "..", "config", "resources.yaml")
 _DEFAULT_STATE = os.path.join(_HERE, "..", "config", "state.json")
+_DEFAULT_AUTH_CONFIG = os.path.join(_HERE, "..", "config", "auth.yaml")
 
 # Load environment variables from a .env file at the project root, if present.
 # Variables already set in the real environment take precedence.
@@ -79,13 +81,18 @@ async def get_resource(resource_class: str, name: str, enumerator: str):
 
 
 @app.post("/api/reserve", tags=["reservations"])
-async def reserve_resources(request: ReservationRequest):
-    """Reserve one or more resources for a client.
+async def reserve_resources(
+    request: ReservationRequest,
+    principal: Principal = Depends(require_principal),
+):
+    """Reserve one or more resources for the authenticated principal.
 
-    Returns 409 if any resource is already reserved or does not exist.
-    All-or-nothing: no resources are reserved if any validation fails.
+    The resources are owned by the authenticated identity; any ``client_id``
+    in the request body is ignored. Returns 409 if any resource is already
+    reserved or does not exist. All-or-nothing: no resources are reserved if
+    any validation fails.
     """
-    success, message, resources = rm.reserve_resources(request.client_id, request.resources)
+    success, message, resources = rm.reserve_resources(principal.name, request.resources)
     if not success:
         raise HTTPException(
             status_code=409,
@@ -98,17 +105,37 @@ async def reserve_resources(request: ReservationRequest):
 
 
 @app.post("/api/release", tags=["reservations"])
-async def release_resources(request: ReleaseRequest):
-    """Release one or more resources owned by a client."""
-    success, message = rm.release_resources(request.client_id, request.resources)
+async def release_resources(
+    request: ReleaseRequest,
+    principal: Principal = Depends(require_principal),
+):
+    """Release one or more resources.
+
+    Clients may only release resources they own; operators may release any.
+    """
+    success, message = rm.release_resources(
+        principal.name, request.resources, operator_override=principal.is_operator
+    )
     if not success:
         raise HTTPException(status_code=400, detail=message)
     return {"message": message}
 
 
 @app.delete("/api/clients/{client_id}/resources", tags=["reservations"])
-async def release_all_for_client(client_id: str):
-    """Release all resources currently held by a client."""
+async def release_all_for_client(
+    client_id: str,
+    principal: Principal = Depends(require_principal),
+):
+    """Release all resources held by a client.
+
+    A client may only release its own resources; an operator may release for
+    any client.
+    """
+    if not principal.is_operator and client_id != principal.name:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to release resources for another client",
+        )
     count = rm.release_all_for_client(client_id)
     return {"message": f"Released {count} resource(s) for client '{client_id}'", "count": count}
 
@@ -127,8 +154,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Mu2e DAQ Resource Manager Server")
     parser.add_argument(
         "--host",
-        default=os.environ.get("RM_HOST", "0.0.0.0"),
-        help="Bind host (default: 0.0.0.0)",
+        default=os.environ.get("RM_HOST", "127.0.0.1"),
+        help="Bind host (default: 127.0.0.1; set 0.0.0.0 to expose on all interfaces)",
     )
     parser.add_argument(
         "--port",
@@ -146,6 +173,17 @@ def parse_args():
         default=os.environ.get("RM_STATE", _DEFAULT_STATE),
         help="Path to reservation state JSON file",
     )
+    parser.add_argument(
+        "--auth-config",
+        default=os.environ.get("RM_AUTH_CONFIG", _DEFAULT_AUTH_CONFIG),
+        help="Path to the auth token YAML config",
+    )
+    parser.add_argument(
+        "--no-auth",
+        action="store_true",
+        default=truthy(os.environ.get("RM_AUTH_DISABLED")),
+        help="Disable authentication (trusted/local use only)",
+    )
     return parser.parse_args()
 
 
@@ -154,6 +192,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     rm = ResourceManager(args.config, args.state)
+    configure_auth(args.auth_config, disabled=args.no_auth)
     print(f"Loaded config: {args.config}")
     print(f"State file:    {args.state}")
     uvicorn.run(app, host=args.host, port=args.port)
@@ -162,4 +201,8 @@ else:
     rm = ResourceManager(
         os.environ.get("RM_CONFIG", _DEFAULT_CONFIG),
         os.environ.get("RM_STATE", _DEFAULT_STATE),
+    )
+    configure_auth(
+        os.environ.get("RM_AUTH_CONFIG", _DEFAULT_AUTH_CONFIG),
+        disabled=truthy(os.environ.get("RM_AUTH_DISABLED")),
     )

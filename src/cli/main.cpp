@@ -1,5 +1,6 @@
 #include "ResourceManagerClient.h"
 
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -69,7 +70,8 @@ static void printResource(const Resource& r)
 static void printUsage(const char* prog)
 {
     std::cerr
-        << "Usage: " << prog << " [--host HOST] [--port PORT] COMMAND [args]\n\n"
+        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] COMMAND [args]\n\n"
+        << "  --token TOKEN  Bearer token for reserve/release (or set RM_TOKEN)\n\n"
         << "Commands:\n"
         << "  list [--status available|reserved]              List resources\n"
         << "  get  <class> <name> <enum>                      Get a specific resource\n"
@@ -106,6 +108,9 @@ int main(int argc, char* argv[])
 {
     std::string host = "localhost";
     int         port = 8080;
+    std::string token;
+    if (const char* envTok = std::getenv("RM_TOKEN"))
+        token = envTok;
 
     // Collect raw args
     std::vector<std::string> args(argv + 1, argv + argc);
@@ -117,6 +122,8 @@ int main(int argc, char* argv[])
             host = args[++i];
         } else if (args[i] == "--port" && i + 1 < args.size()) {
             port = std::stoi(args[++i]);
+        } else if (args[i] == "--token" && i + 1 < args.size()) {
+            token = args[++i];
         } else {
             break;
         }
@@ -131,7 +138,7 @@ int main(int argc, char* argv[])
     const std::string command = args[i++];
 
     try {
-        ResourceManagerClient client(host, port);
+        ResourceManagerClient client(host, port, token);
 
         // ── list ─────────────────────────────────────────────────────────
         if (command == "list") {
@@ -170,11 +177,13 @@ int main(int argc, char* argv[])
                 return 1;
             }
             std::string clientId = args[i++];
-            auto ids = parseTriples(args, i);
-            if (ids.empty()) {
-                std::cerr << RED << "No resource triples specified." << RESET << '\n';
+            size_t remaining = args.size() - i;
+            if (remaining == 0 || remaining % 3 != 0) {
+                std::cerr << RED << "Resource arguments must be given as complete "
+                             "<class> <name> <enum> triples." << RESET << '\n';
                 return 1;
             }
+            auto ids = parseTriples(args, i);
             auto result = client.reserve(clientId, ids);
             if (result.success) {
                 std::cout << GREEN << "✓ " << result.message << RESET << '\n';
@@ -202,11 +211,13 @@ int main(int argc, char* argv[])
                 return 1;
             }
             std::string clientId = args[i++];
-            auto ids = parseTriples(args, i);
-            if (ids.empty()) {
-                std::cerr << RED << "No resource triples specified." << RESET << '\n';
+            size_t remaining = args.size() - i;
+            if (remaining == 0 || remaining % 3 != 0) {
+                std::cerr << RED << "Resource arguments must be given as complete "
+                             "<class> <name> <enum> triples." << RESET << '\n';
                 return 1;
             }
+            auto ids = parseTriples(args, i);
             std::string errMsg;
             if (client.release(clientId, ids, errMsg)) {
                 std::cout << GREEN << "✓ Resources released successfully." << RESET << '\n';

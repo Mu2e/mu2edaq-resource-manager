@@ -8,6 +8,16 @@ function clientId() {
   return document.getElementById('client-id-input').value.trim() || 'web-client';
 }
 
+function authToken() {
+  return document.getElementById('token-input').value.trim();
+}
+
+// Authorization header for state-changing requests, when a token is set.
+function authHeaders() {
+  const t = authToken();
+  return t ? { 'Authorization': `Bearer ${t}` } : {};
+}
+
 async function apiFetch(url, opts = {}) {
   const res = await fetch(url, opts);
   const data = await res.json();
@@ -104,7 +114,7 @@ async function reserve(resourceClass, name, enumerator) {
   try {
     const data = await apiFetch('/api/reserve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         client_id: cid,
         resources: [{ resource_class: resourceClass, name, enumerator }],
@@ -124,7 +134,7 @@ async function release(resourceClass, name, enumerator) {
   try {
     await apiFetch('/api/release', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         client_id: cid,
         resources: [{ resource_class: resourceClass, name, enumerator }],
@@ -153,6 +163,14 @@ function toggleAutoRefresh() {
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 window.addEventListener('load', () => {
+  // Restore and persist the bearer token across reloads (sessionStorage so it
+  // is cleared when the tab closes).
+  const tokenInput = document.getElementById('token-input');
+  tokenInput.value = sessionStorage.getItem('rm_token') || '';
+  tokenInput.addEventListener('input', () => {
+    sessionStorage.setItem('rm_token', tokenInput.value.trim());
+  });
+
   refresh();
   _autoRefreshTimer = setInterval(refresh, 5000);
 });

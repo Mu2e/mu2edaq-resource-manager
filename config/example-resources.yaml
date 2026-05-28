@@ -9,7 +9,8 @@ resources:
       node: mu2ecalo01.fnal.gov
       user: mu2edaq
       ports: [2000, 2001, 2002]
- - class: CALO-1
+
+  - class: CALO-1
     name: DTC
     enumerator: "02"
     location:

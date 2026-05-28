@@ -105,7 +105,10 @@ class ResourceManager:
             return True, f"Successfully reserved {len(reserved)} resource(s)", reserved
 
     def release_resources(
-        self, client_id: str, identifiers: List[ResourceIdentifier]
+        self,
+        client_id: str,
+        identifiers: List[ResourceIdentifier],
+        operator_override: bool = False,
     ) -> Tuple[bool, str]:
         with self._lock:
             # Validate all before releasing any
@@ -116,7 +119,7 @@ class ResourceManager:
                     return False, f"Resource '{key}' does not exist"
                 if resource.status == "available":
                     return False, f"Resource '{key}' is not currently reserved"
-                if resource.owner != client_id:
+                if resource.owner != client_id and not operator_override:
                     return False, f"Resource '{key}' is owned by '{resource.owner}', not '{client_id}'"
 
             for ident in identifiers:

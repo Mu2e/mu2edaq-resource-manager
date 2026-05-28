@@ -120,12 +120,15 @@ Any extra arguments to the start script are forwarded to `server/mu2e-resource-m
 You can also run the server module directly:
 
 ```bash
-python3 server/mu2e-resource-manager.py --host 0.0.0.0 --port 8080 \
+python3 server/mu2e-resource-manager.py --host 127.0.0.1 --port 8080 \
     --config config/resources.yaml \
-    --state config/state.json
+    --state config/state.json \
+    --auth-config config/auth.yaml
 ```
 
-**Environment variables:** `RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `RM_VENV`. These can be set in your shell or placed in a `.env` file (see [Configuration](#configuration)).
+The server binds to `127.0.0.1` (localhost) by default; set `--host 0.0.0.0` (or `RM_HOST=0.0.0.0`) to expose it on all interfaces, which should only be done with authentication configured (see [Authentication](#authentication)).
+
+**Environment variables:** `RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `RM_VENV`. These can be set in your shell or placed in a `.env` file (see [Configuration](#configuration)).
 
 ### Python CLI
 
@@ -139,21 +142,22 @@ python3 cli/rm_cli.py list --status available
 # Get a specific resource
 python3 cli/rm_cli.py get DTC DTC 01
 
-# Reserve resources (all-or-nothing)
-python3 cli/rm_cli.py reserve my-client DTC DTC 01
-python3 cli/rm_cli.py reserve my-client DTC DTC 01 CFO CFO 01
+# Reserve resources (all-or-nothing). Reserve/release/release-all require a
+# token; pass --token or set RM_TOKEN. The owner is the token's principal.
+python3 cli/rm_cli.py --token "$RM_TOKEN" reserve my-client DTC DTC 01
+python3 cli/rm_cli.py --token "$RM_TOKEN" reserve my-client DTC DTC 01 CFO CFO 01
 
 # Release resources
-python3 cli/rm_cli.py release my-client DTC DTC 01
+python3 cli/rm_cli.py --token "$RM_TOKEN" release my-client DTC DTC 01
 
 # Release all resources held by a client
-python3 cli/rm_cli.py release-all my-client
+python3 cli/rm_cli.py --token "$RM_TOKEN" release-all my-client
 
 # Server summary
 python3 cli/rm_cli.py status
 ```
 
-Use `--host` / `--port` to target a remote server (default: `localhost:8080`).
+Use `--host` / `--port` to target a remote server (default: `localhost:8080`), and `--token` (or the `RM_TOKEN` environment variable) for state-changing commands. Read-only commands (`list`, `get`, `status`) need no token.
 
 ### C++ Client Library
 
@@ -202,7 +206,35 @@ Both the shell scripts and the server read a `.env` file in the project root, if
 cp example.env .env
 ```
 
-`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
+`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_TOKEN`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
+
+### Authentication
+
+The state-changing endpoints (`POST /api/reserve`, `POST /api/release`, `DELETE /api/clients/{id}/resources`) require a bearer token; read-only endpoints (`GET /api/resources`, `GET /api/status`) are open. Tokens map to a **principal** (the identity that owns reservations) and a **role**:
+
+- `client` — may reserve, and release/release-all only its own resources.
+- `operator` — may release any resource and release-all for any client.
+
+Configure tokens by copying the template (the live file is git-ignored):
+
+```bash
+cp config/auth.example.yaml config/auth.yaml
+```
+
+```yaml
+auth:
+  tokens:
+    - token: "a-long-random-secret"
+      principal: partition1
+      role: client
+    - token: "an-operator-secret"
+      principal: operator
+      role: operator
+```
+
+Clients send the token as `Authorization: Bearer <token>`. The owner of a reservation is always the authenticated principal — the `client_id` field in request bodies is ignored for authorization. Override the config path with `RM_AUTH_CONFIG`.
+
+If no tokens are configured the server still runs but rejects every state-changing request with `401`. For a trusted, localhost-only deployment you can disable auth entirely with `RM_AUTH_DISABLED=1` (do not do this on an interface reachable beyond localhost).
 
 ### `config/resources.yaml`
 
@@ -225,13 +257,27 @@ Written automatically by the server to persist reservations across restarts. Do 
 
 ## REST API
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/resources` | List all resources (`?status=available\|reserved`) |
-| `GET` | `/api/resources/{class}/{name}/{enum}` | Get a specific resource |
-| `POST` | `/api/reserve` | Reserve resources (all-or-nothing) |
-| `POST` | `/api/release` | Release resources |
-| `DELETE` | `/api/clients/{client_id}/resources` | Release all resources for a client |
-| `GET` | `/api/status` | Server summary (total/available/reserved counts) |
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/resources` | — | List all resources (`?status=available\|reserved`) |
+| `GET` | `/api/resources/{class}/{name}/{enum}` | — | Get a specific resource |
+| `POST` | `/api/reserve` | Bearer | Reserve resources (all-or-nothing; owner = principal) |
+| `POST` | `/api/release` | Bearer | Release resources (own only; operator: any) |
+| `DELETE` | `/api/clients/{client_id}/resources` | Bearer | Release all resources for a client (own only; operator: any) |
+| `GET` | `/api/status` | — | Server summary (total/available/reserved counts) |
+
+Endpoints marked **Bearer** require an `Authorization: Bearer <token>` header (see [Authentication](#authentication)). At least one resource is required in reserve/release request bodies; an empty list returns `422`.
 
 Interactive API docs are available at `http://localhost:8080/docs` when the server is running.
+
+## Testing
+
+```bash
+# Python API/auth tests (pytest)
+venv/bin/pip install -r requirements-dev.txt
+venv/bin/python -m pytest tests/
+
+# C++ client lifecycle test (CTest)
+cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+(cd build && ctest --output-on-failure)
+```

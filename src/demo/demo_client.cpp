@@ -1,6 +1,7 @@
 #include "ResourceManagerClient.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -45,6 +46,11 @@ int main(int argc, char* argv[])
     if (argc > 1) host = argv[1];
     if (argc > 2) port = std::stoi(argv[2]);
 
+    // Reserve/release require a token unless the server runs with auth disabled.
+    std::string token;
+    if (const char* envTok = std::getenv("RM_TOKEN"))
+        token = envTok;
+
     const std::string CLIENT_ID = "cpp-demo-client";
 
     std::cout << '\n'
@@ -52,7 +58,7 @@ int main(int argc, char* argv[])
               << "Server:    " << host << ':' << port << '\n'
               << "Client ID: " << CLIENT_ID << '\n';
 
-    ResourceManagerClient client(host, port);
+    ResourceManagerClient client(host, port, token);
 
     // ── 1. Server status ──────────────────────────────────────────────────
     section(1, "Server Status");

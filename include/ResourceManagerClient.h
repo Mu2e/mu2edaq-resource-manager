@@ -63,10 +63,22 @@ class ResourceManagerClient {
 public:
     /**
      * Construct a client targeting the given host and port.
-     * curl_global_init() is called here; the destructor calls curl_global_cleanup().
+     *
+     * If a bearer token is supplied it is sent as an Authorization header on
+     * state-changing requests (reserve/release/release-all); read-only calls do
+     * not require it.
+     *
+     * libcurl's process-wide global state is initialized once, on first client
+     * construction, in a thread-safe manner. It is intentionally never cleaned
+     * up per instance, so constructing or destroying one client never affects
+     * other clients or unrelated libcurl users in the same process.
      */
-    explicit ResourceManagerClient(const std::string& host = "localhost", int port = 8080);
+    explicit ResourceManagerClient(const std::string& host = "localhost", int port = 8080,
+                                   const std::string& token = "");
     ~ResourceManagerClient();
+
+    /** Set or replace the bearer token sent on state-changing requests. */
+    void setAuthToken(const std::string& token) { auth_token_ = token; }
 
     // Non-copyable, movable
     ResourceManagerClient(const ResourceManagerClient&)            = delete;
@@ -99,6 +111,7 @@ public:
 
 private:
     std::string base_url_;
+    std::string auth_token_;
 
     HttpResponse httpGet(const std::string& path);
     HttpResponse httpPost(const std::string& path, const std::string& body);

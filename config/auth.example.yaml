@@ -1,0 +1,34 @@
+# Mu2e DAQ Resource Manager - Authentication tokens.
+#
+# Copy this file to config/auth.yaml (git-ignored) and replace the tokens with
+# real secrets:
+#
+#     cp config/auth.example.yaml config/auth.yaml
+#
+# Each token maps to a principal (the identity that owns reservations) and a
+# role:
+#   client   - may reserve, and release/release-all only its own resources.
+#   operator - may release any resource and release-all for any client.
+#
+# Clients send the token as an HTTP bearer header on state-changing requests:
+#     Authorization: Bearer <token>
+#
+# Read-only endpoints (GET /api/resources, /api/status) do not require a token.
+#
+# Override the config location with RM_AUTH_CONFIG. For trusted/local setups
+# you can disable auth entirely with RM_AUTH_DISABLED=1 (not recommended for
+# anything reachable beyond localhost).
+
+auth:
+  tokens:
+    - token: "replace-with-a-long-random-secret-for-partition1"
+      principal: partition1
+      role: client
+
+    - token: "replace-with-a-long-random-secret-for-partition2"
+      principal: partition2
+      role: client
+
+    - token: "replace-with-a-long-random-operator-secret"
+      principal: operator
+      role: operator

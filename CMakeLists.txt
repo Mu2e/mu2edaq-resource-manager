@@ -45,6 +45,16 @@ add_executable(rm-demo src/demo/demo_client.cpp)
 target_link_libraries(rm-demo PRIVATE rmclient)
 target_compile_options(rm-demo PRIVATE -Wall -Wextra)
 
+# ── Tests ──────────────────────────────────────────────────────────────────
+
+enable_testing()
+
+add_executable(rm-client-lifecycle-test tests/cpp/test_client_lifecycle.cpp)
+target_link_libraries(rm-client-lifecycle-test PRIVATE rmclient)
+target_compile_options(rm-client-lifecycle-test PRIVATE -Wall -Wextra)
+
+add_test(NAME client_lifecycle COMMAND rm-client-lifecycle-test)
+
 # ── Install ──────────────────────────────────────────────────────────────────
 
 include(GNUInstallDirs)

@@ -20,14 +20,17 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 
-# State files
-config/state.json
+# State files (live + rotated/backup copies)
+config/state.json*
 
 # Runtime files (daemon pidfile, logs)
 run/
 
 # Local environment overrides (committed template is example.env)
 .env
+
+# Auth tokens (committed template is config/auth.example.yaml)
+config/auth.yaml
 
 # IDE
 .vscode/

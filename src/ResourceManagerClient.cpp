@@ -3,12 +3,27 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#include <mutex>
 #include <sstream>
 #include <stdexcept>
 
 using json = nlohmann::json;
 
 namespace mu2e {
+
+// libcurl global init/cleanup are process-wide lifecycle calls, not per-object.
+// Initialize exactly once for the whole process on first client construction.
+// We deliberately do not call curl_global_cleanup() per instance (or at all):
+// tying it to a single client could deinitialize libcurl while other clients or
+// unrelated libcurl users in the same process are still active. The OS reclaims
+// the process-wide resources at exit.
+static void ensureCurlInitialized()
+{
+    static std::once_flag curl_init_flag;
+    std::call_once(curl_init_flag, []() {
+        curl_global_init(CURL_GLOBAL_DEFAULT);
+    });
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -50,16 +65,15 @@ size_t ResourceManagerClient::writeCallback(void* contents, size_t size,
 
 // ── Construction ──────────────────────────────────────────────────────────────
 
-ResourceManagerClient::ResourceManagerClient(const std::string& host, int port)
+ResourceManagerClient::ResourceManagerClient(const std::string& host, int port,
+                                             const std::string& token)
     : base_url_("http://" + host + ":" + std::to_string(port))
+    , auth_token_(token)
 {
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    ensureCurlInitialized();
 }
 
-ResourceManagerClient::~ResourceManagerClient()
-{
-    curl_global_cleanup();
-}
+ResourceManagerClient::~ResourceManagerClient() = default;
 
 // ── HTTP primitives ───────────────────────────────────────────────────────────
 
@@ -99,6 +113,8 @@ HttpResponse ResourceManagerClient::httpPost(const std::string& path,
 
     curl_slist* headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
+    if (!auth_token_.empty())
+        headers = curl_slist_append(headers, ("Authorization: Bearer " + auth_token_).c_str());
 
     curl_easy_setopt(curl, CURLOPT_URL,           url.c_str());
     curl_easy_setopt(curl, CURLOPT_POST,          1L);
@@ -128,8 +144,14 @@ HttpResponse ResourceManagerClient::httpDelete(const std::string& path)
     HttpResponse resp;
     std::string  url = base_url_ + path;
 
+    curl_slist* headers = nullptr;
+    if (!auth_token_.empty())
+        headers = curl_slist_append(headers, ("Authorization: Bearer " + auth_token_).c_str());
+
     curl_easy_setopt(curl, CURLOPT_URL,            url.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST,  "DELETE");
+    if (headers)
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,  writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA,      &resp.body);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT,        10L);
@@ -137,6 +159,7 @@ HttpResponse ResourceManagerClient::httpDelete(const std::string& path)
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resp.status_code);
     curl_easy_cleanup(curl);
+    curl_slist_free_all(headers);
 
     if (res != CURLE_OK)
         throw ResourceManagerException(std::string("HTTP DELETE failed: ") + curl_easy_strerror(res));

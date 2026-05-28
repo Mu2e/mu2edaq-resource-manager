@@ -11,6 +11,9 @@ mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
 .IR FILE ]
 .RB [ \-\-state
 .IR FILE ]
+.RB [ \-\-auth\-config
+.IR FILE ]
+.RB [ \-\-no\-auth ]
 .PP
 .B scripts/start_server.sh
 .RB [ \-d | \-\-daemon ]
@@ -80,8 +83,11 @@ file in the project root when present; see
 .BI \-\-host " HOST"
 IP address or hostname to bind.
 Default:
+.B 127.0.0.1
+(localhost only). Set
 .B 0.0.0.0
-(all interfaces).
+to expose on all interfaces, which should only be done with authentication
+configured.
 Can also be set via the
 .B RM_HOST
 environment variable.
@@ -109,6 +115,42 @@ Default:
 Can also be set via the
 .B RM_STATE
 environment variable.
+.TP
+.BI \-\-auth\-config " FILE"
+Path to the YAML file mapping bearer tokens to principals and roles.
+Default:
+.IR config/auth.yaml .
+Can also be set via the
+.B RM_AUTH_CONFIG
+environment variable.
+.TP
+.B \-\-no\-auth
+Disable authentication entirely. Intended for trusted, localhost-only use.
+Can also be enabled via a truthy
+.B RM_AUTH_DISABLED
+environment variable.
+.SH AUTHENTICATION
+The state-changing endpoints
+.RB ( POST " " /api/reserve ", " POST " " /api/release ", "
+.BR DELETE " " /api/clients/{id}/resources )
+require an HTTP bearer token:
+.BR "Authorization: Bearer <token>" .
+Read-only endpoints are open.
+Tokens are defined in the auth config and map to a
+.I principal
+(the identity that owns reservations) and a
+.I role
+.RB ( client " or " operator ).
+A
+.B client
+may release only its own resources; an
+.B operator
+may release any.
+The owner of a reservation is always the authenticated principal; the
+.B client_id
+field in request bodies is ignored for authorization.
+If no tokens are configured, state-changing requests are rejected with
+.BR 401 .
 .SH ENVIRONMENT
 .TP
 .B RM_HOST
@@ -126,6 +168,15 @@ Default config file path (overridden by
 .B RM_STATE
 Default state file path (overridden by
 .BR \-\-state ).
+.TP
+.B RM_AUTH_CONFIG
+Default auth token config path (overridden by
+.BR \-\-auth\-config ).
+.TP
+.B RM_AUTH_DISABLED
+If set to a truthy value (1, true, yes, on), disable authentication
+(equivalent to
+.BR \-\-no\-auth ).
 .TP
 .B RM_DAEMON
 If set to a truthy value (1, true, yes, on), start in daemon mode without
@@ -212,6 +263,12 @@ Edit to add or remove resources; restart the server to apply changes.
 Persistent reservation state.
 Written atomically via a temporary file.
 Do not edit by hand.
+.TP
+.I config/auth.yaml
+Bearer token definitions (principal and role per token).
+Not tracked in version control; copy
+.I config/auth.example.yaml
+to create it.
 .TP
 .I run/resource-manager.pid
 PID file written when running in daemon mode.
