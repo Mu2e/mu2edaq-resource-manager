@@ -13,6 +13,10 @@ mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
 .IR FILE ]
 .PP
 .B scripts/start_server.sh
+.RB [ \-d | \-\-daemon ]
+.RI [ "app.py options" ]
+.PP
+.B scripts/stop_server.sh
 .SH DESCRIPTION
 .B mu2edaq\-resource\-manager
 is a FastAPI-based HTTP server that manages hardware resource reservations
@@ -36,6 +40,40 @@ when the
 directory is present.
 Interactive API documentation (Swagger UI) is available at
 .BR /docs .
+.SH RUNNING
+The
+.B scripts/start_server.sh
+wrapper launches the server using the project virtual environment.
+By default it runs in the foreground; pass
+.B \-d
+or
+.B \-\-daemon
+(or set
+.BR RM_DAEMON )
+to run detached in the background.
+In daemon mode a PID file is written (default
+.IR run/resource-manager.pid )
+and output is redirected to a log file (default
+.IR run/resource-manager.log ).
+Starting a second daemon while one is already running is refused.
+Any further arguments are forwarded to
+.B server/app.py
+and override the environment-derived values.
+.PP
+The
+.B scripts/stop_server.sh
+wrapper stops a daemon-mode server. It reads the PID file, sends
+.B SIGTERM
+for a graceful shutdown, and escalates to
+.B SIGKILL
+if the process has not exited within
+.B RM_STOP_TIMEOUT
+seconds (default 10), then removes the PID file.
+.PP
+Both wrappers and the server read a
+.I .env
+file in the project root when present; see
+.BR ENVIRONMENT .
 .SH OPTIONS
 .TP
 .BI \-\-host " HOST"
@@ -43,11 +81,17 @@ IP address or hostname to bind.
 Default:
 .B 0.0.0.0
 (all interfaces).
+Can also be set via the
+.B RM_HOST
+environment variable.
 .TP
 .BI \-\-port " PORT"
 TCP port to listen on.
 Default:
 .BR 8080 .
+Can also be set via the
+.B RM_PORT
+environment variable.
 .TP
 .BI \-\-config " FILE"
 Path to the YAML resource configuration file.
@@ -81,6 +125,48 @@ Default config file path (overridden by
 .B RM_STATE
 Default state file path (overridden by
 .BR \-\-state ).
+.TP
+.B RM_DAEMON
+If set to a truthy value (1, true, yes, on), start in daemon mode without
+.BR \-\-daemon .
+.TP
+.B RM_RUN_DIR
+Directory for the daemon PID file and log.
+Default:
+.IR run/ .
+.TP
+.B RM_PIDFILE
+Daemon PID file path.
+Default:
+.IR $RM_RUN_DIR/resource-manager.pid .
+.TP
+.B RM_LOG
+Daemon log file path.
+Default:
+.IR $RM_RUN_DIR/resource-manager.log .
+.TP
+.B RM_STOP_TIMEOUT
+Seconds
+.B stop_server.sh
+waits for a graceful shutdown before sending
+.BR SIGKILL .
+Default:
+.BR 10 .
+.TP
+.B RM_VENV
+Python virtual environment directory used by the wrapper scripts.
+Default:
+.IR venv/ .
+.TP
+.B RM_ENV_FILE
+Path to the
+.I .env
+file loaded by the scripts and the server.
+Default:
+.I .env
+in the project root.
+A variable already set in the environment is not overridden by
+.IR .env .
 .SH API ENDPOINTS
 .TP
 .B GET /api/resources
@@ -125,12 +211,36 @@ Edit to add or remove resources; restart the server to apply changes.
 Persistent reservation state.
 Written atomically via a temporary file.
 Do not edit by hand.
+.TP
+.I run/resource-manager.pid
+PID file written when running in daemon mode.
+.TP
+.I run/resource-manager.log
+Captured stdout/stderr of the daemon-mode server.
+.TP
+.I .env
+Optional environment overrides read by the scripts and the server.
+Copy
+.I example.env
+to
+.I .env
+and edit.
+Not tracked in version control.
 .SH EXAMPLES
-Start with defaults:
+Start with defaults (foreground):
 .PP
 .RS
 .nf
-./scripts/start_server.sh
+\&./scripts/start_server.sh
+.fi
+.RE
+.PP
+Start in the background as a daemon and later stop it:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh --daemon
+\&./scripts/stop_server.sh
 .fi
 .RE
 .PP
@@ -139,6 +249,14 @@ Start on a specific interface and port:
 .RS
 .nf
 python3 server/app.py --host 127.0.0.1 --port 9090
+.fi
+.RE
+.PP
+Override the port via a forwarded flag:
+.PP
+.RS
+.nf
+\&./scripts/start_server.sh --port 9090
 .fi
 .RE
 .PP

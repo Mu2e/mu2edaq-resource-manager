@@ -20,6 +20,15 @@ _WEB_DIR = os.path.join(_HERE, "..", "web")
 _DEFAULT_CONFIG = os.path.join(_HERE, "..", "config", "resources.yaml")
 _DEFAULT_STATE = os.path.join(_HERE, "..", "config", "state.json")
 
+# Load environment variables from a .env file at the project root, if present.
+# Variables already set in the real environment take precedence.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(os.environ.get("RM_ENV_FILE", os.path.join(_HERE, "..", ".env")))
+except ImportError:
+    pass
+
 app = FastAPI(
     title="Mu2e DAQ Resource Manager",
     version="1.0.0",
@@ -116,8 +125,17 @@ async def get_status():
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Mu2e DAQ Resource Manager Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Bind host (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8080, help="Bind port (default: 8080)")
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("RM_HOST", "0.0.0.0"),
+        help="Bind host (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("RM_PORT", "8080")),
+        help="Bind port (default: 8080)",
+    )
     parser.add_argument(
         "--config",
         default=os.environ.get("RM_CONFIG", _DEFAULT_CONFIG),

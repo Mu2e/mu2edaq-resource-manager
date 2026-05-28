@@ -23,6 +23,12 @@ Makefile
 # State files
 config/state.json
 
+# Runtime files (daemon pidfile, logs)
+run/
+
+# Local environment overrides (committed template is example.env)
+.env
+
 # IDE
 .vscode/
 .idea/
