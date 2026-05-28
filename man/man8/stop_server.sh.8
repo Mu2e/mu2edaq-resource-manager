@@ -1,0 +1,91 @@
+.TH STOP_SERVER.SH 8 "2026-05-28" "1.0.0" "Mu2e DAQ"
+.SH NAME
+stop_server.sh \- stop the daemon-mode Mu2e DAQ resource manager server
+.SH SYNOPSIS
+.B scripts/stop_server.sh
+.SH DESCRIPTION
+.B stop_server.sh
+stops a Mu2e DAQ resource manager server that was started in daemon mode by
+.BR start_server.sh .
+It reads the PID file written at startup, sends
+.B SIGTERM
+to request a graceful shutdown, and waits for the process to exit.
+If the process is still running after
+.B RM_STOP_TIMEOUT
+seconds, the script escalates to
+.B SIGKILL
+and then removes the PID file.
+.PP
+The script handles the common edge cases without error: if no PID file exists
+the server is reported as not running in daemon mode; an empty PID file is
+removed; and a PID file referring to a process that is no longer running is
+treated as stale and removed.
+A foreground server is not affected by this script and should be stopped with
+Ctrl-C in its own terminal.
+.PP
+The script takes no command-line options; its behavior is controlled through
+environment variables, which may also be supplied via a
+.I .env
+file in the project root (see
+.BR ENVIRONMENT ).
+.SH ENVIRONMENT
+.TP
+.B RM_RUN_DIR
+Directory containing the PID file.
+Default:
+.IR run/ .
+.TP
+.B RM_PIDFILE
+Path to the PID file written by
+.BR start_server.sh .
+Default:
+.IR $RM_RUN_DIR/resource-manager.pid .
+.TP
+.B RM_STOP_TIMEOUT
+Seconds to wait for a graceful shutdown before sending
+.BR SIGKILL .
+Default:
+.BR 10 .
+.TP
+.B RM_ENV_FILE
+Path to the
+.I .env
+file read for the variables above.
+Default:
+.I .env
+in the project root.
+A variable already set in the environment is not overridden by
+.IR .env .
+.SH EXIT STATUS
+.TP
+.B 0
+The server was stopped, or no running daemon was found.
+.TP
+.B 1
+The process could not be stopped.
+.SH FILES
+.TP
+.I run/resource-manager.pid
+PID file read to identify the running daemon; removed on successful stop.
+.TP
+.I run/resource-manager.log
+Daemon log file (written by the server, not modified by this script).
+.SH EXAMPLES
+Stop the running daemon:
+.PP
+.RS
+.nf
+\&./scripts/stop_server.sh
+.fi
+.RE
+.PP
+Allow more time for a graceful shutdown before forcing it:
+.PP
+.RS
+.nf
+RM_STOP_TIMEOUT=30 ./scripts/stop_server.sh
+.fi
+.RE
+.SH SEE ALSO
+.BR bootstrap.sh (1),
+.BR mu2edaq\-resource\-manager (8)

@@ -1,0 +1,80 @@
+.TH BOOTSTRAP.SH 1 "2026-05-28" "1.0.0" "Mu2e DAQ"
+.SH NAME
+bootstrap.sh \- set up the Mu2e DAQ resource manager Python environment
+.SH SYNOPSIS
+.B scripts/bootstrap.sh
+.SH DESCRIPTION
+.B bootstrap.sh
+prepares the Python environment needed to run the Mu2e DAQ resource manager.
+It creates a virtual environment, upgrades
+.BR pip ,
+and installs the project dependencies listed in
+.IR requirements.txt .
+.PP
+If the virtual environment already exists it is reused, so the script is safe
+to re-run at any time to pull in updated dependencies.
+The script requires Python 3.9 or newer and aborts if an older interpreter is
+selected.
+.PP
+The script takes no command-line options; its behavior is controlled entirely
+through environment variables, which may also be supplied via a
+.I .env
+file in the project root (see
+.BR ENVIRONMENT ).
+.SH ENVIRONMENT
+.TP
+.B PYTHON
+Interpreter used to create the virtual environment.
+Default:
+.BR python3 .
+.TP
+.B RM_VENV
+Directory in which the virtual environment is created.
+Default:
+.IR venv/ .
+.TP
+.B RM_ENV_FILE
+Path to the
+.I .env
+file read for the variables above.
+Default:
+.I .env
+in the project root.
+A variable already set in the environment is not overridden by
+.IR .env .
+.SH EXIT STATUS
+.TP
+.B 0
+The virtual environment was created (or reused) and dependencies installed.
+.TP
+.B 1
+The selected interpreter was missing or older than Python 3.9.
+.SH FILES
+.TP
+.I requirements.txt
+List of Python dependencies installed into the virtual environment.
+.TP
+.I venv/
+Default location of the created virtual environment.
+.TP
+.I .env
+Optional environment overrides read by the script.
+.SH EXAMPLES
+Create the environment with defaults:
+.PP
+.RS
+.nf
+\&./scripts/bootstrap.sh
+.fi
+.RE
+.PP
+Use a specific interpreter and a custom environment directory:
+.PP
+.RS
+.nf
+PYTHON=python3.11 RM_VENV=/opt/mu2edaq/venv ./scripts/bootstrap.sh
+.fi
+.RE
+.SH SEE ALSO
+.BR stop_server.sh (8),
+.BR mu2edaq\-resource\-manager (8)
