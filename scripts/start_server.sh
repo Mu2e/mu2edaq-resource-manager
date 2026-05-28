@@ -8,21 +8,45 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROG="$(basename "$0")"
 
 # Load .env (does not override variables already set in the environment).
 # shellcheck source=scripts/load_env.sh
 . "$SCRIPT_DIR/load_env.sh"
 
-VENV_DIR="${RM_VENV:-$PROJECT_DIR/venv}"
-VENV_PY="$VENV_DIR/bin/python"
-if [ ! -x "$VENV_PY" ]; then
-    # Windows (Git Bash / MSYS) layout.
-    VENV_PY="$VENV_DIR/Scripts/python.exe"
-fi
-if [ ! -x "$VENV_PY" ]; then
-    echo "Error: virtual environment not found in $VENV_DIR. Run scripts/bootstrap.sh first." >&2
-    exit 1
-fi
+usage() {
+    cat <<EOF
+Usage: $PROG [-d|--daemon] [-h|--help] [SERVER_OPTIONS...]
+
+Start the Mu2e DAQ Resource Manager server. Runs in the foreground by
+default; use -d/--daemon to run detached in the background with a PID file.
+
+Options:
+  -d, --daemon   Run as a background daemon. Writes a PID file and log under
+                 RM_RUN_DIR and refuses to start a second instance.
+                 Equivalent to setting RM_DAEMON=1.
+  -h, --help     Show this help and exit.
+
+Any other arguments are forwarded to the server
+(server/mu2e-resource-manager.py) and override the environment-derived
+values, e.g.: $PROG --port 9000
+Run "python3 server/mu2e-resource-manager.py --help" (or pass them after a
+"--") to see the full list of server options.
+
+Environment variables (may also be set in a .env file at the project root):
+  RM_HOST        Bind host (default: 0.0.0.0)
+  RM_PORT        Bind port (default: 8080)
+  RM_CONFIG      Resource definition YAML (default: config/resources.yaml)
+  RM_STATE       Reservation state JSON (default: config/state.json)
+  RM_DAEMON      Start in daemon mode when truthy (1/true/yes/on)
+  RM_RUN_DIR     Directory for the pidfile and log (default: run/)
+  RM_PIDFILE     PID file path (default: \$RM_RUN_DIR/resource-manager.pid)
+  RM_LOG         Daemon log file (default: \$RM_RUN_DIR/resource-manager.log)
+  RM_VENV        Virtual environment directory (default: venv/)
+
+Stop a daemon-mode server with scripts/stop_server.sh.
+EOF
+}
 
 HOST="${RM_HOST:-0.0.0.0}"
 PORT="${RM_PORT:-8080}"
@@ -38,15 +62,28 @@ case "${RM_DAEMON:-0}" in
     1|true|TRUE|yes|YES|on|ON) DAEMON=1 ;;
 esac
 
-# Pull -d/--daemon out of the argument list; forward everything else to the server.
+# Pull our own options out of the argument list; forward everything else to
+# the server. Everything after "--" is forwarded verbatim.
 ARGS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -d|--daemon) DAEMON=1; shift ;;
+        -h|--help) usage; exit 0 ;;
         --) shift; while [ "$#" -gt 0 ]; do ARGS+=("$1"); shift; done ;;
         *) ARGS+=("$1"); shift ;;
     esac
 done
+
+VENV_DIR="${RM_VENV:-$PROJECT_DIR/venv}"
+VENV_PY="$VENV_DIR/bin/python"
+if [ ! -x "$VENV_PY" ]; then
+    # Windows (Git Bash / MSYS) layout.
+    VENV_PY="$VENV_DIR/Scripts/python.exe"
+fi
+if [ ! -x "$VENV_PY" ]; then
+    echo "Error: virtual environment not found in $VENV_DIR. Run scripts/bootstrap.sh first." >&2
+    exit 1
+fi
 
 echo "Starting Mu2e DAQ Resource Manager"
 echo "  Config: $CONFIG"
