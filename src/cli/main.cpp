@@ -46,9 +46,9 @@ static void printHeader()
               << std::setw(28) << "NODE"
               << std::setw(14) << "USER"
               << std::setw(22) << "PORTS"
-              << "STATUS"
+              << "STATUS / OWNER / WHO"
               << RESET << '\n'
-              << "  " << std::string(108, '-') << '\n';
+              << "  " << std::string(118, '-') << '\n';
 }
 
 static void printResource(const Resource& r)
@@ -57,6 +57,10 @@ static void printResource(const Resource& r)
     if (!r.owner.empty())
         ownerPart = std::string("  (") + YELLOW + r.owner + RESET + ")";
 
+    std::string whoPart;
+    if (!r.who.empty())
+        whoPart = std::string("  [") + YELLOW + r.who + RESET + "]";
+
     std::cout << std::left
               << "  " << std::setw(14) << r.resource_class
               << std::setw(12) << r.name
@@ -64,14 +68,15 @@ static void printResource(const Resource& r)
               << std::setw(28) << r.location.node
               << std::setw(14) << r.location.user
               << std::setw(22) << portList(r)
-              << statusStr(r.status) << ownerPart << '\n';
+              << statusStr(r.status) << ownerPart << whoPart << '\n';
 }
 
 static void printUsage(const char* prog)
 {
     std::cerr
-        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] COMMAND [args]\n\n"
-        << "  --token TOKEN  Bearer token for reserve/release (or set RM_TOKEN)\n\n"
+        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] [--operator NAME] COMMAND [args]\n\n"
+        << "  --token TOKEN     Bearer token for reserve/release (or set RM_TOKEN)\n"
+        << "  --operator NAME   Operator annotation shown in the 'Who' column (or set RM_OPERATOR)\n\n"
         << "Commands:\n"
         << "  list [--status available|reserved]              List resources\n"
         << "  get  <class> <name> <enum>                      Get a specific resource\n"
@@ -111,6 +116,9 @@ int main(int argc, char* argv[])
     std::string token;
     if (const char* envTok = std::getenv("RM_TOKEN"))
         token = envTok;
+    std::string operatorLabel;
+    if (const char* envOp = std::getenv("RM_OPERATOR"))
+        operatorLabel = envOp;
 
     // Collect raw args
     std::vector<std::string> args(argv + 1, argv + argc);
@@ -124,6 +132,8 @@ int main(int argc, char* argv[])
             port = std::stoi(args[++i]);
         } else if (args[i] == "--token" && i + 1 < args.size()) {
             token = args[++i];
+        } else if (args[i] == "--operator" && i + 1 < args.size()) {
+            operatorLabel = args[++i];
         } else {
             break;
         }
@@ -184,7 +194,7 @@ int main(int argc, char* argv[])
                 return 1;
             }
             auto ids = parseTriples(args, i);
-            auto result = client.reserve(clientId, ids);
+            auto result = client.reserve(clientId, ids, operatorLabel);
             if (result.success) {
                 std::cout << GREEN << "✓ " << result.message << RESET << '\n';
                 printHeader();

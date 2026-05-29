@@ -28,7 +28,7 @@ def _print_header():
     print(
         f"\n{BOLD}"
         f"  {'CLASS':<14} {'NAME':<12} {'#':<6} "
-        f"{'NODE':<28} {'USER':<14} {'PORTS':<22} STATUS / OWNER"
+        f"{'NODE':<28} {'USER':<14} {'PORTS':<22} STATUS / OWNER / WHO"
         f"{RESET}"
     )
     print("  " + "─" * 110)
@@ -37,11 +37,13 @@ def _print_header():
 def _print_resource(r: dict):
     ports = ",".join(str(p) for p in r.get("location", {}).get("ports", []))
     owner = r.get("owner") or ""
+    who = r.get("who") or ""
     owner_str = f"  ({YELLOW}{owner}{RESET})" if owner else ""
+    who_str = f"  [{YELLOW}{who}{RESET}]" if who else ""
     print(
         f"  {r['resource_class']:<14} {r['name']:<12} {r['enumerator']:<6} "
         f"{r['location']['node']:<28} {r['location']['user']:<14} "
-        f"{ports:<22} {_status_str(r['status'])}{owner_str}"
+        f"{ports:<22} {_status_str(r['status'])}{owner_str}{who_str}"
     )
 
 
@@ -91,7 +93,7 @@ class CLI:
 
     def cmd_reserve(self, args):
         resources = _parse_triples(args.resources)
-        payload = {"client_id": args.client_id, "resources": resources}
+        payload = {"who": args.operator, "resources": resources}
         r = self._post("/api/reserve", payload)
         if r.status_code == 200:
             data = r.json()
@@ -189,9 +191,12 @@ Examples:
 
     # reserve
     p_res = sub.add_parser("reserve", help="Reserve resources")
-    p_res.add_argument("client_id", metavar="CLIENT_ID")
+    p_res.add_argument("client_id", metavar="CLIENT_ID",
+                       help="Accepted for compatibility; the owner is the token principal")
     p_res.add_argument("resources", nargs="+", metavar="CLASS NAME ENUM",
                        help="One or more triples: <class> <name> <enumerator>")
+    p_res.add_argument("--operator", default=os.environ.get("RM_OPERATOR"),
+                       help="Operator annotation shown in the 'Who' column (or set RM_OPERATOR)")
 
     # release
     p_rel = sub.add_parser("release", help="Release resources")

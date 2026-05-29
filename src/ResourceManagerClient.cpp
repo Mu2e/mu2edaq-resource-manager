@@ -27,6 +27,16 @@ static void ensureCurlInitialized()
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+// Optional string field that may be absent or JSON null (e.g. owner/who on an
+// available resource). nlohmann's value() throws on null, so handle it here.
+static std::string optString(const json& j, const char* key)
+{
+    auto it = j.find(key);
+    if (it == j.end() || it->is_null())
+        return "";
+    return it->get<std::string>();
+}
+
 static Resource parseResource(const json& j)
 {
     Resource r;
@@ -34,7 +44,8 @@ static Resource parseResource(const json& j)
     r.name           = j.at("name").get<std::string>();
     r.enumerator     = j.at("enumerator").get<std::string>();
     r.status         = j.at("status").get<std::string>();
-    r.owner          = j.value("owner", "");
+    r.owner          = optString(j, "owner");
+    r.who            = optString(j, "who");
 
     auto& loc        = j.at("location");
     r.location.node  = loc.at("node").get<std::string>();
@@ -202,10 +213,12 @@ ResourceManagerClient::getResource(const std::string& resource_class,
 
 ReservationResult
 ResourceManagerClient::reserve(const std::string&                   client_id,
-                                const std::vector<ResourceIdentifier>& resources)
+                                const std::vector<ResourceIdentifier>& resources,
+                                const std::string&                   who)
 {
     json req;
     req["client_id"] = client_id;
+    req["who"]       = who.empty() ? json(nullptr) : json(who);
     req["resources"] = json::array();
     for (const auto& r : resources)
         req["resources"].push_back(resourceIdentifierToJson(r));

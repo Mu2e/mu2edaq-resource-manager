@@ -21,7 +21,8 @@ struct Resource {
     std::string enumerator;
     Location    location;
     std::string status;   // "available" | "reserved"
-    std::string owner;    // empty when not reserved
+    std::string owner;    // authenticated principal; empty when not reserved
+    std::string who;      // free-text operator annotation; empty when not set
 };
 
 struct ResourceIdentifier {
@@ -94,9 +95,13 @@ public:
                                         const std::string& name,
                                         const std::string& enumerator);
 
-    /** Reserve one or more resources for client_id.  All-or-nothing. */
+    /** Reserve one or more resources.  All-or-nothing.
+     *  The owner is the authenticated principal (from the bearer token);
+     *  client_id is accepted for compatibility but ignored by the server.
+     *  who is an optional free-text operator annotation (the "Who" column). */
     ReservationResult reserve(const std::string&                   client_id,
-                              const std::vector<ResourceIdentifier>& resources);
+                              const std::vector<ResourceIdentifier>& resources,
+                              const std::string&                   who = "");
 
     /** Release one or more resources owned by client_id. */
     bool release(const std::string&                   client_id,

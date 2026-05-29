@@ -85,3 +85,15 @@ def test_read_endpoints_do_not_require_token(client_factory):
 def test_auth_disabled_allows_unauthenticated_reserve(client_factory):
     c = client_factory(disabled=True)
     assert _reserve(c, None).status_code == 200
+
+
+def test_whoami_requires_token(client_factory):
+    c = client_factory()
+    assert c.get("/api/whoami").status_code == 401
+
+
+def test_whoami_returns_principal_and_role(client_factory):
+    c = client_factory()
+    r = c.get("/api/whoami", headers={"Authorization": "Bearer tok-op"})
+    assert r.status_code == 200
+    assert r.json() == {"principal": "operator", "role": "operator"}

@@ -17,6 +17,8 @@
         <span class="badge badge-total">Total <span id="badge-total">—</span></span>
         <span class="badge badge-available">Available <span id="badge-available">—</span></span>
         <span class="badge badge-reserved">Reserved <span id="badge-reserved">—</span></span>
+        <span class="badge badge-identity">Operator <span id="identity-operator">—</span></span>
+        <span class="badge badge-role">Role <span id="identity-role">—</span></span>
       </div>
     </div>
   </header>
@@ -31,8 +33,8 @@
           <option value="reserved">Reserved</option>
         </select>
 
-        <label for="client-id-input">Client&nbsp;ID:</label>
-        <input id="client-id-input" type="text" placeholder="my-client" value="web-client" />
+        <label for="operator-input">Operator:</label>
+        <input id="operator-input" type="text" placeholder="your name" />
 
         <label for="token-input">Token:</label>
         <input id="token-input" type="password" placeholder="bearer token" autocomplete="off" />
@@ -44,6 +46,10 @@
           Auto-refresh (5s)
         </label>
       </div>
+    </div>
+
+    <div id="auth-hint" class="auth-hint" style="display:none">
+      &#128274; Enter your bearer token in the <strong>Token</strong> field to reserve or release resources. Browsing is read-only without one.
     </div>
 
     <div id="flash" class="flash" role="alert" style="display:none"></div>
@@ -60,11 +66,12 @@
             <th>Ports</th>
             <th>Status</th>
             <th>Owner</th>
+            <th>Who</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody id="resources-tbody">
-          <tr><td colspan="9" class="cell-center cell-muted">Loading…</td></tr>
+          <tr><td colspan="10" class="cell-center cell-muted">Loading…</td></tr>
         </tbody>
       </table>
     </div>

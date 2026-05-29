@@ -92,7 +92,9 @@ async def reserve_resources(
     reserved or does not exist. All-or-nothing: no resources are reserved if
     any validation fails.
     """
-    success, message, resources = rm.reserve_resources(principal.name, request.resources)
+    success, message, resources = rm.reserve_resources(
+        principal.name, request.resources, who=request.who
+    )
     if not success:
         raise HTTPException(
             status_code=409,
@@ -144,6 +146,12 @@ async def release_all_for_client(
 async def get_status():
     """Get server summary: total, available, and reserved resource counts."""
     return rm.get_status()
+
+
+@app.get("/api/whoami", tags=["server"])
+async def whoami(principal: Principal = Depends(require_principal)):
+    """Return the authenticated principal and role for the supplied token."""
+    return {"principal": principal.name, "role": principal.role}
 
 
 # ---------------------------------------------------------------------------

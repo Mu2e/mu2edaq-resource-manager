@@ -17,6 +17,9 @@ class Resource(BaseModel):
     location: Location
     status: str = "available"
     owner: Optional[str] = None
+    # Free-text operator annotation set at reservation time. Independent of
+    # owner (the authenticated principal); e.g. owner="mu2edaq", who="Andrew".
+    who: Optional[str] = None
 
 
 class ResourceIdentifier(BaseModel):
@@ -29,6 +32,8 @@ class ReservationRequest(BaseModel):
     # client_id is accepted for backward compatibility but ignored: the owner
     # is the authenticated principal. See server auth.
     client_id: Optional[str] = None
+    # Free-text operator annotation (the "Operator" / "Who" label).
+    who: Optional[str] = None
     resources: List[ResourceIdentifier] = Field(..., min_length=1)
 
 

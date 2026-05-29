@@ -253,6 +253,10 @@ Release all resources currently held by
 .TP
 .B GET /api/status
 Return a summary with total, available, and reserved resource counts.
+.TP
+.B GET /api/whoami
+Return the authenticated principal and role for the supplied bearer token.
+Requires authentication.
 .SH FILES
 .TP
 .I config/resources.yaml

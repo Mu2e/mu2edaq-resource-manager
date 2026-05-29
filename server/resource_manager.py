@@ -49,6 +49,7 @@ class ResourceManager:
                 if key in self._resources:
                     self._resources[key].status = entry.get("status", "available")
                     self._resources[key].owner = entry.get("owner")
+                    self._resources[key].who = entry.get("who")
         except (json.JSONDecodeError, KeyError):
             pass  # corrupt state file — start fresh
 
@@ -56,7 +57,7 @@ class ResourceManager:
         if not self._state_file:
             return
         state = {
-            key: {"status": r.status, "owner": r.owner}
+            key: {"status": r.status, "owner": r.owner, "who": r.who}
             for key, r in self._resources.items()
         }
         tmp = self._state_file + ".tmp"
@@ -77,7 +78,10 @@ class ResourceManager:
             return self._resources.get(key)
 
     def reserve_resources(
-        self, client_id: str, identifiers: List[ResourceIdentifier]
+        self,
+        client_id: str,
+        identifiers: List[ResourceIdentifier],
+        who: Optional[str] = None,
     ) -> Tuple[bool, str, List[Resource]]:
         with self._lock:
             # Validate all resources exist and are available before touching any
@@ -99,6 +103,7 @@ class ResourceManager:
                 key = self._resource_key(ident.resource_class, ident.name, ident.enumerator)
                 self._resources[key].status = "reserved"
                 self._resources[key].owner = client_id
+                self._resources[key].who = who
                 reserved.append(self._resources[key])
 
             self._save_state()
@@ -126,6 +131,7 @@ class ResourceManager:
                 key = self._resource_key(ident.resource_class, ident.name, ident.enumerator)
                 self._resources[key].status = "available"
                 self._resources[key].owner = None
+                self._resources[key].who = None
 
             self._save_state()
             return True, f"Successfully released {len(identifiers)} resource(s)"
@@ -137,6 +143,7 @@ class ResourceManager:
                 if resource.owner == client_id:
                     resource.status = "available"
                     resource.owner = None
+                    resource.who = None
                     count += 1
             if count:
                 self._save_state()

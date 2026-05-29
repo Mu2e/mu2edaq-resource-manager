@@ -265,6 +265,7 @@ Written automatically by the server to persist reservations across restarts. Do 
 | `POST` | `/api/release` | Bearer | Release resources (own only; operator: any) |
 | `DELETE` | `/api/clients/{client_id}/resources` | Bearer | Release all resources for a client (own only; operator: any) |
 | `GET` | `/api/status` | — | Server summary (total/available/reserved counts) |
+| `GET` | `/api/whoami` | Bearer | Return the authenticated principal and role for the token |
 
 Endpoints marked **Bearer** require an `Authorization: Bearer <token>` header (see [Authentication](#authentication)). At least one resource is required in reserve/release request bodies; an empty list returns `422`.
 
