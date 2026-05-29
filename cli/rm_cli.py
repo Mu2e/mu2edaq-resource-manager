@@ -66,9 +66,26 @@ def _print_header():
     print("  " + "─" * 110)
 
 
+def _format_ports(ports: list) -> str:
+    """Compress a sorted integer list into compact range notation."""
+    if not ports:
+        return ""
+    sorted_ports = sorted(ports)
+    segments = []
+    start = end = sorted_ports[0]
+    for p in sorted_ports[1:]:
+        if p == end + 1:
+            end = p
+        else:
+            segments.append(f"{start}-{end}" if start != end else str(start))
+            start = end = p
+    segments.append(f"{start}-{end}" if start != end else str(start))
+    return ",".join(segments)
+
+
 def _print_resource(r: dict):
     loc = r.get("location", {})
-    ports = "ANY" if loc.get("ports_any") else ",".join(str(p) for p in loc.get("ports", []))
+    ports = "ANY" if loc.get("ports_any") else _format_ports(loc.get("ports", []))
     owner = r.get("owner") or ""
     who = r.get("who") or ""
     owner_str = f"  ({YELLOW}{owner}{RESET})" if owner else ""

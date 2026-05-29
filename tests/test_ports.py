@@ -66,3 +66,8 @@ def test_parse_ports_helper():
     assert ResourceManager._parse_ports([2000, 2001]) == ([2000, 2001], False)
     assert ResourceManager._parse_ports(["ANY", 2000]) == ([2000], True)
     assert ResourceManager._parse_ports([]) == ([], False)
+    # Range strings
+    assert ResourceManager._parse_ports("2000-2002") == ([2000, 2001, 2002], False)
+    assert ResourceManager._parse_ports(["2000-2002"]) == ([2000, 2001, 2002], False)
+    assert ResourceManager._parse_ports(["2000-2002", 2003]) == ([2000, 2001, 2002, 2003], False)
+    assert ResourceManager._parse_ports(["2000-2002", "ANY"]) == ([2000, 2001, 2002], True)

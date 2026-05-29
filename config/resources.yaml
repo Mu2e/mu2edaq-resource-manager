@@ -227,6 +227,294 @@ resources:
       user: mu2edaq
       ports: [2000, 2001, 2002]
 
+  - class: TRK-1
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-01.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-1
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-01.fnal.gov
+      user: mu2edaq
+      ports: ["2000-2010"]
+
+  - class: TRK-2
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-02.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-2
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-02.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-3
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-03.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-3
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-03.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-4
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-04.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-4
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-04.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-5
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-05.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-5
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-05.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-6
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-06.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-6
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-06.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-7
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-07.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-7
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-07.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-8
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-08.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-8
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-08.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-9
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-09.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-9
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-09.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-10
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-10.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-10
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-10.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-11
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-11.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-11
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-11.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-12
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-12.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-12
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-12.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-13
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-13.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-13
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-13.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-14
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-14.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-14
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-14.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-15
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-15.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-15
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-15.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-16
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-16.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-16
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-16.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-17
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-17.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-17
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-17.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-18
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-trk-18.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
+  - class: TRK-18
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-trk-18.fnal.gov
+      user: mu2edaq
+      ports: ["2000-3000"]
+
   - class: CAL-1
     name: ROC
     enumerator: "01"

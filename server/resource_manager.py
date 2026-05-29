@@ -24,20 +24,33 @@ class ResourceManager:
     def _parse_ports(raw) -> Tuple[List[int], bool]:
         """Parse the config 'ports' value into (ports, ports_any).
 
-        Accepts a list of port numbers, or the literal ANY (case-insensitive,
-        as a bare value or inside the list) meaning all ports.
+        Accepts:
+          - A list of port numbers, range strings ("2000-3000"), or the
+            literal ANY (case-insensitive) meaning all ports.
+          - A bare string: "ANY" or a single range like "2000-3000".
         """
         if raw is None:
             return [], False
         if isinstance(raw, str):
-            if raw.strip().upper() == "ANY":
+            s = raw.strip().upper()
+            if s == "ANY":
                 return [], True
+            if "-" in raw:
+                start, _, end = raw.partition("-")
+                return list(range(int(start), int(end) + 1)), False
             raise ValueError(f"Invalid ports value: {raw!r}")
         ports: List[int] = []
         ports_any = False
         for p in raw:
-            if isinstance(p, str) and p.strip().upper() == "ANY":
-                ports_any = True
+            if isinstance(p, str):
+                s = p.strip().upper()
+                if s == "ANY":
+                    ports_any = True
+                elif "-" in p:
+                    start, _, end = p.partition("-")
+                    ports.extend(range(int(start), int(end) + 1))
+                else:
+                    ports.append(int(p))
             else:
                 ports.append(int(p))
         return ports, ports_any

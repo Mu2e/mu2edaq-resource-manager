@@ -8,6 +8,13 @@ let _identity = { principal: null, role: null };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+// Display port list as "first-last" (or just the single port if only one).
+function formatPorts(ports) {
+  if (!ports || ports.length === 0) return '';
+  const sorted = [...ports].sort((a, b) => a - b);
+  return sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
+}
+
 // Free-text operator annotation (the "Operator" field / "Who" column).
 function operatorLabel() {
   return document.getElementById('operator-input').value.trim();
@@ -108,7 +115,7 @@ async function loadResources() {
     }
 
     tbody.innerHTML = resources.map(r => {
-      const ports      = r.location.ports_any ? 'ANY' : (r.location.ports || []).join(', ');
+      const ports      = r.location.ports_any ? 'ANY' : formatPorts(r.location.ports);
       const statusCls  = `status-${r.status}`;
       const ownerCell  = r.owner ? `<span class="owner-cell">${esc(r.owner)}</span>` : '<span class="cell-muted">—</span>';
       const whoCell    = r.who ? esc(r.who) : '<span class="cell-muted">—</span>';
