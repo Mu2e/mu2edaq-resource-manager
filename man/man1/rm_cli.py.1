@@ -32,6 +32,14 @@ Default:
 Resource manager server port.
 Default:
 .BR 8080 .
+.TP
+.BI \-\-token " TOKEN"
+Bearer token for state-changing commands
+.RB ( reserve ", " release ", " release\-all ).
+Can also be set via the
+.B RM_TOKEN
+environment variable.
+Read-only commands do not require it.
 .SH COMMANDS
 .TP
 .B list
@@ -46,23 +54,32 @@ Filter output to only resources with the given status.
 Display a single resource identified by its class, name, and enumerator.
 Exits with status 1 if the resource does not exist.
 .TP
-.BI "reserve " "CLIENT_ID CLASS NAME ENUM " [CLASS NAME ENUM...]
-Reserve one or more resources for
-.IR CLIENT_ID .
+.BI "reserve " "CLASS NAME ENUM " [CLASS NAME ENUM...]
+Reserve one or more resources for the authenticated principal (from the bearer
+token).
 Resources are specified as consecutive triples.
 The operation is all-or-nothing: if any resource is already reserved or
 does not exist, no resources are reserved and the command exits with status 1.
+.RS
 .TP
-.BI "release " "CLIENT_ID CLASS NAME ENUM " [CLASS NAME ENUM...]
-Release one or more resources currently held by
-.IR CLIENT_ID .
+.BI \-\-who " NAME"
+Optional operator annotation recorded with the reservation and shown in the
+"Who" column. Can also be set via the
+.B RM_WHO
+environment variable.
+.RE
+.TP
+.BI "release " "CLASS NAME ENUM " [CLASS NAME ENUM...]
+Release one or more resources held by the authenticated principal (operators
+may release any).
 The operation is all-or-nothing.
-Exits with status 1 if any resource is not reserved by
-.IR CLIENT_ID .
+Exits with status 1 if any resource is not reserved by the caller.
 .TP
 .BI "release\-all " CLIENT_ID
-Release every resource currently held by
+Release every resource owned by
 .IR CLIENT_ID .
+A non-operator may only target its own principal; an operator may target any
+client.
 .TP
 .B status
 Display a summary of total, available, and reserved resource counts.
@@ -102,15 +119,15 @@ Reserve a single DTC:
 .PP
 .RS
 .nf
-python3 cli/rm_cli.py reserve my-client DTC DTC 01
+python3 cli/rm_cli.py reserve DTC DTC 01
 .fi
 .RE
 .PP
-Reserve a DTC and a CFO together:
+Reserve a DTC and a CFO together, annotated with an operator label:
 .PP
 .RS
 .nf
-python3 cli/rm_cli.py reserve my-client DTC DTC 01 CFO CFO 01
+python3 cli/rm_cli.py reserve --who Andrew DTC DTC 01 CFO CFO 01
 .fi
 .RE
 .PP
@@ -118,7 +135,7 @@ Release a specific resource:
 .PP
 .RS
 .nf
-python3 cli/rm_cli.py release my-client DTC DTC 01
+python3 cli/rm_cli.py release DTC DTC 01
 .fi
 .RE
 .PP
@@ -126,7 +143,7 @@ Release all resources held by a client:
 .PP
 .RS
 .nf
-python3 cli/rm_cli.py release-all my-client
+python3 cli/rm_cli.py release-all partition1
 .fi
 .RE
 .PP

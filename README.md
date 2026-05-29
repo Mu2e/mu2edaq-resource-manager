@@ -144,20 +144,23 @@ python3 cli/rm_cli.py get DTC DTC 01
 
 # Reserve resources (all-or-nothing). Reserve/release/release-all require a
 # token; pass --token or set RM_TOKEN. The owner is the token's principal.
-python3 cli/rm_cli.py --token "$RM_TOKEN" reserve my-client DTC DTC 01
-python3 cli/rm_cli.py --token "$RM_TOKEN" reserve my-client DTC DTC 01 CFO CFO 01
+python3 cli/rm_cli.py --token "$RM_TOKEN" reserve DTC DTC 01
+python3 cli/rm_cli.py --token "$RM_TOKEN" reserve DTC DTC 01 CFO CFO 01
+
+# Optionally annotate the reservation with an operator label (the "Who" column)
+python3 cli/rm_cli.py --token "$RM_TOKEN" reserve --who Andrew DTC DTC 01
 
 # Release resources
-python3 cli/rm_cli.py --token "$RM_TOKEN" release my-client DTC DTC 01
+python3 cli/rm_cli.py --token "$RM_TOKEN" release DTC DTC 01
 
-# Release all resources held by a client
-python3 cli/rm_cli.py --token "$RM_TOKEN" release-all my-client
+# Release all resources held by a client (operators may target any client)
+python3 cli/rm_cli.py --token "$RM_TOKEN" release-all partition1
 
 # Server summary
 python3 cli/rm_cli.py status
 ```
 
-Use `--host` / `--port` to target a remote server (default: `localhost:8080`), and `--token` (or the `RM_TOKEN` environment variable) for state-changing commands. Read-only commands (`list`, `get`, `status`) need no token.
+Use `--host` / `--port` to target a remote server (default: `localhost:8080`), and `--token` (or the `RM_TOKEN` environment variable) for state-changing commands. Read-only commands (`list`, `get`, `status`) need no token. The `reserve` command accepts an optional `--who` (or `RM_WHO`) operator annotation shown in the "Who" column. The C++ CLI (`rm-cli`) takes the same `--token` / `--who` options.
 
 ### C++ Client Library
 
@@ -206,7 +209,7 @@ Both the shell scripts and the server read a `.env` file in the project root, if
 cp example.env .env
 ```
 
-`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_TOKEN`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
+`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_TOKEN`, `RM_WHO`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
 
 ### Authentication
 

@@ -93,7 +93,7 @@ class CLI:
 
     def cmd_reserve(self, args):
         resources = _parse_triples(args.resources)
-        payload = {"who": args.operator, "resources": resources}
+        payload = {"who": args.who, "resources": resources}
         r = self._post("/api/reserve", payload)
         if r.status_code == 200:
             data = r.json()
@@ -119,7 +119,7 @@ class CLI:
 
     def cmd_release(self, args):
         resources = _parse_triples(args.resources)
-        payload = {"client_id": args.client_id, "resources": resources}
+        payload = {"resources": resources}
         r = self._post("/api/release", payload)
         if r.status_code == 200:
             print(f"{GREEN}✓ {r.json()['message']}{RESET}")
@@ -161,10 +161,10 @@ Examples:
   %(prog)s list
   %(prog)s list --status available
   %(prog)s get DTC DTC 01
-  %(prog)s reserve my-client DTC DTC 01
-  %(prog)s reserve my-client DTC DTC 01 CFO CFO 01
-  %(prog)s release my-client DTC DTC 01
-  %(prog)s release-all my-client
+  %(prog)s reserve DTC DTC 01
+  %(prog)s reserve --who Andrew DTC DTC 01 CFO CFO 01
+  %(prog)s release DTC DTC 01
+  %(prog)s release-all partition1
   %(prog)s status
 """,
     )
@@ -189,21 +189,18 @@ Examples:
     p_get.add_argument("name", metavar="NAME")
     p_get.add_argument("enumerator", metavar="ENUM")
 
-    # reserve
+    # reserve (owner is the authenticated token principal)
     p_res = sub.add_parser("reserve", help="Reserve resources")
-    p_res.add_argument("client_id", metavar="CLIENT_ID",
-                       help="Accepted for compatibility; the owner is the token principal")
     p_res.add_argument("resources", nargs="+", metavar="CLASS NAME ENUM",
                        help="One or more triples: <class> <name> <enumerator>")
-    p_res.add_argument("--operator", default=os.environ.get("RM_OPERATOR"),
-                       help="Operator annotation shown in the 'Who' column (or set RM_OPERATOR)")
+    p_res.add_argument("--who", default=os.environ.get("RM_WHO"),
+                       help="Optional operator annotation shown in the 'Who' column (or set RM_WHO)")
 
-    # release
+    # release (authorized against the token principal)
     p_rel = sub.add_parser("release", help="Release resources")
-    p_rel.add_argument("client_id", metavar="CLIENT_ID")
     p_rel.add_argument("resources", nargs="+", metavar="CLASS NAME ENUM")
 
-    # release-all
+    # release-all (CLIENT_ID is the target; operators may target any client)
     p_ra = sub.add_parser("release-all", help="Release all resources for a client")
     p_ra.add_argument("client_id", metavar="CLIENT_ID")
 

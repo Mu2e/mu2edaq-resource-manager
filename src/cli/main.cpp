@@ -74,24 +74,24 @@ static void printResource(const Resource& r)
 static void printUsage(const char* prog)
 {
     std::cerr
-        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] [--operator NAME] COMMAND [args]\n\n"
-        << "  --token TOKEN     Bearer token for reserve/release (or set RM_TOKEN)\n"
-        << "  --operator NAME   Operator annotation shown in the 'Who' column (or set RM_OPERATOR)\n\n"
+        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] [--who NAME] COMMAND [args]\n\n"
+        << "  --token TOKEN  Bearer token for reserve/release (or set RM_TOKEN)\n"
+        << "  --who NAME     Optional operator annotation shown in the 'Who' column (or set RM_WHO)\n\n"
         << "Commands:\n"
-        << "  list [--status available|reserved]              List resources\n"
-        << "  get  <class> <name> <enum>                      Get a specific resource\n"
-        << "  reserve  <client-id> <cls> <name> <enum> [...]  Reserve resources\n"
-        << "  release  <client-id> <cls> <name> <enum> [...]  Release resources\n"
-        << "  release-all  <client-id>                        Release all for a client\n"
-        << "  status                                          Show server status\n\n"
+        << "  list [--status available|reserved]     List resources\n"
+        << "  get  <class> <name> <enum>             Get a specific resource\n"
+        << "  reserve  <cls> <name> <enum> [...]     Reserve resources\n"
+        << "  release  <cls> <name> <enum> [...]     Release resources\n"
+        << "  release-all  <client-id>               Release all for a client\n"
+        << "  status                                 Show server status\n\n"
         << "Examples:\n"
         << "  " << prog << " list\n"
         << "  " << prog << " list --status available\n"
         << "  " << prog << " get DTC DTC 01\n"
-        << "  " << prog << " reserve my-client DTC DTC 01\n"
-        << "  " << prog << " reserve my-client DTC DTC 01 CFO CFO 01\n"
-        << "  " << prog << " release my-client DTC DTC 01\n"
-        << "  " << prog << " release-all my-client\n"
+        << "  " << prog << " reserve DTC DTC 01\n"
+        << "  " << prog << " --who Andrew reserve DTC DTC 01 CFO CFO 01\n"
+        << "  " << prog << " release DTC DTC 01\n"
+        << "  " << prog << " release-all partition1\n"
         << "  " << prog << " status\n";
 }
 
@@ -116,9 +116,9 @@ int main(int argc, char* argv[])
     std::string token;
     if (const char* envTok = std::getenv("RM_TOKEN"))
         token = envTok;
-    std::string operatorLabel;
-    if (const char* envOp = std::getenv("RM_OPERATOR"))
-        operatorLabel = envOp;
+    std::string who;
+    if (const char* envWho = std::getenv("RM_WHO"))
+        who = envWho;
 
     // Collect raw args
     std::vector<std::string> args(argv + 1, argv + argc);
@@ -132,8 +132,8 @@ int main(int argc, char* argv[])
             port = std::stoi(args[++i]);
         } else if (args[i] == "--token" && i + 1 < args.size()) {
             token = args[++i];
-        } else if (args[i] == "--operator" && i + 1 < args.size()) {
-            operatorLabel = args[++i];
+        } else if (args[i] == "--who" && i + 1 < args.size()) {
+            who = args[++i];
         } else {
             break;
         }
@@ -181,12 +181,6 @@ int main(int argc, char* argv[])
 
         // ── reserve ──────────────────────────────────────────────────────
         } else if (command == "reserve") {
-            if (i >= args.size()) {
-                std::cerr << RED << "Usage: reserve <client-id> <cls> <name> <enum> [...]"
-                          << RESET << '\n';
-                return 1;
-            }
-            std::string clientId = args[i++];
             size_t remaining = args.size() - i;
             if (remaining == 0 || remaining % 3 != 0) {
                 std::cerr << RED << "Resource arguments must be given as complete "
@@ -194,7 +188,7 @@ int main(int argc, char* argv[])
                 return 1;
             }
             auto ids = parseTriples(args, i);
-            auto result = client.reserve(clientId, ids, operatorLabel);
+            auto result = client.reserve("", ids, who);
             if (result.success) {
                 std::cout << GREEN << "✓ " << result.message << RESET << '\n';
                 printHeader();
@@ -215,12 +209,6 @@ int main(int argc, char* argv[])
 
         // ── release ──────────────────────────────────────────────────────
         } else if (command == "release") {
-            if (i >= args.size()) {
-                std::cerr << RED << "Usage: release <client-id> <cls> <name> <enum> [...]"
-                          << RESET << '\n';
-                return 1;
-            }
-            std::string clientId = args[i++];
             size_t remaining = args.size() - i;
             if (remaining == 0 || remaining % 3 != 0) {
                 std::cerr << RED << "Resource arguments must be given as complete "
@@ -229,7 +217,7 @@ int main(int argc, char* argv[])
             }
             auto ids = parseTriples(args, i);
             std::string errMsg;
-            if (client.release(clientId, ids, errMsg)) {
+            if (client.release("", ids, errMsg)) {
                 std::cout << GREEN << "✓ Resources released successfully." << RESET << '\n';
             } else {
                 std::cerr << RED << "✗ " << errMsg << RESET << '\n';
