@@ -62,9 +62,10 @@ static Resource parseResource(const json& j)
     r.owner          = optString(j, "owner");
     r.who            = optString(j, "who");
 
-    auto& loc        = j.at("location");
-    r.location.node  = loc.at("node").get<std::string>();
-    r.location.user  = loc.at("user").get<std::string>();
+    auto& loc           = j.at("location");
+    r.location.node      = loc.at("node").get<std::string>();
+    r.location.user      = loc.at("user").get<std::string>();
+    r.location.ports_any = loc.value("ports_any", false);
     for (const auto& p : loc.at("ports"))
         r.location.ports.push_back(p.get<int>());
 

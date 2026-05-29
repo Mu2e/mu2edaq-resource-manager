@@ -67,7 +67,8 @@ def _print_header():
 
 
 def _print_resource(r: dict):
-    ports = ",".join(str(p) for p in r.get("location", {}).get("ports", []))
+    loc = r.get("location", {})
+    ports = "ANY" if loc.get("ports_any") else ",".join(str(p) for p in loc.get("ports", []))
     owner = r.get("owner") or ""
     who = r.get("who") or ""
     owner_str = f"  ({YELLOW}{owner}{RESET})" if owner else ""

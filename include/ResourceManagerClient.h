@@ -14,6 +14,7 @@ struct Location {
     std::string node;
     std::string user;
     std::vector<int> ports;
+    bool ports_any = false;  // true when the config specified ports: ANY
 };
 
 struct Resource {

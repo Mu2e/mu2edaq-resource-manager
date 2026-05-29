@@ -2,55 +2,232 @@
 # Each resource has a class, name, enumerator, and location (node, user, ports)
 
 resources:
-  - class: CALO1
-    name: DTC
-    enumerator: "01"
-    location:
-      node: mu2ecalo01.fnal.gov
-      user: mu2edaq
-      ports: [2000, 2001, 2002]
-
-  - class: CALO1
-    name: DTC
-    enumerator: "02"
-    location:
-      node: mu2ecalo01.fnal.gov
-      user: mu2edaq
-      ports: [2000, 2001, 2002]
-
-  - class: CALO2
-    name: DTC
-    enumerator: "01"
-    location:
-      node: mu2ecalo02.fnal.gov
-      user: mu2edaq
-      ports: [2003, 2004, 2005]
-
-  - class: CALO2
-    name: DTC
-    enumerator: "02"
-    location:
-      node: mu2ecalo02.fnal.gov
-      user: mu2edaq
-      ports: [2000, 2001, 2002]
 
   - class: CFO
     name: CFO
     enumerator: "01"
     location:
-      node: mu2ecfo01.fnal.gov
+      node: mu2e-cfo-01.fnal.gov
       user: mu2edaq
-      ports: [3000, 3001]
+      ports: [ANY]
 
   - class: CFO
     name: CFO
     enumerator: "02"
     location:
-      node: mu2ecfo02.fnal.gov
+      node: mu2e-cfo-02.fnal.gov
       user: mu2edaq
-      ports: [3000, 3001]
+      ports: [ANY]
 
-  - class: CALO1
+  - class: CALO-1
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-01.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-1
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-01.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-2
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-02.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-2
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-02.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-3
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-03.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-3
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-03.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-4
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-04.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-4
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-04.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-5
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-05.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-5
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-05.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-6
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-06.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-6
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-06.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-7
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-07.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-7
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-07.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-8
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-08.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-8
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-08.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-9
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-09.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-9
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-09.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-10
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-10.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-10
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-10.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-11
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-11.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-11
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-11.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-12
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-12.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-12
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-12.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-13
+    name: DTC
+    enumerator: "01"
+    location:
+      node: mu2e-calo-13.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CALO-13
+    name: DTC
+    enumerator: "02"
+    location:
+      node: mu2e-calo-13.fnal.gov
+      user: mu2edaq
+      ports: [2000, 2001, 2002]
+
+  - class: CAL-1
     name: ROC
     enumerator: "01"
     location:
@@ -120,3 +297,29 @@ resources:
       node: mu2edaq03.fnal.gov
       user: mu2edaq
       ports: [5004, 5005, 5006, 5007]
+
+  - class: Datalogger
+    name: DL
+    enumerator: "01"
+    location:
+      node: mu2e-dl-01.fnal.gov
+      user: mu2edaq
+      ports: [ ANY ]
+
+  - class: Datalogger
+    name: DL
+    enumerator: "02"
+    location:
+      node: mu2e-dl-02.fnal.gov
+      user: mu2edaq
+      ports: [ ANY ]
+  
+  - class: Datalogger
+    name: DL
+    enumerator: "03"
+    location:
+      node: mu2e-dl-03.fnal.gov
+      user: mu2edaq     
+      ports: [ ANY ]
+
+

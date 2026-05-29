@@ -27,6 +27,8 @@ static std::string statusStr(const std::string& s)
 
 static std::string portList(const Resource& r)
 {
+    if (r.location.ports_any)
+        return "ANY";
     std::string p;
     for (size_t i = 0; i < r.location.ports.size(); ++i) {
         if (i) p += ',';

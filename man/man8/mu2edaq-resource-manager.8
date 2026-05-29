@@ -321,6 +321,11 @@ Requires authentication.
 .I config/resources.yaml
 Static hardware resource definitions.
 Edit to add or remove resources; restart the server to apply changes.
+A resource's
+.I location.ports
+may be a list of port numbers or the literal
+.B ANY
+(case-insensitive) meaning all ports.
 .TP
 .I config/state.json
 Persistent reservation state.

@@ -108,7 +108,7 @@ async function loadResources() {
     }
 
     tbody.innerHTML = resources.map(r => {
-      const ports      = (r.location.ports || []).join(', ');
+      const ports      = r.location.ports_any ? 'ANY' : (r.location.ports || []).join(', ');
       const statusCls  = `status-${r.status}`;
       const ownerCell  = r.owner ? `<span class="owner-cell">${esc(r.owner)}</span>` : '<span class="cell-muted">—</span>';
       const whoCell    = r.who ? esc(r.who) : '<span class="cell-muted">—</span>';

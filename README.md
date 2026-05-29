@@ -58,7 +58,7 @@ Each resource is identified by a triple: `class:name:enumerator` (e.g., `DTC:CAL
 | `enumerator` | Instance number (e.g., `01`, `02`) |
 | `location.node` | DAQ node hostname |
 | `location.user` | Login user on that node |
-| `location.ports` | Associated TCP ports |
+| `location.ports` | Associated TCP ports (or `ANY` for all ports) |
 | `status` | `available` or `reserved` |
 | `owner` | Client ID holding the reservation |
 
@@ -271,7 +271,17 @@ resources:
       node: mu2edaq01.fnal.gov
       user: mu2edaq
       ports: [2000, 2001, 2002]
+
+  - class: EventBuilder
+    name: EB
+    enumerator: "01"
+    location:
+      node: mu2edaq03.fnal.gov
+      user: mu2edaq
+      ports: ANY            # all ports — displayed as "ANY"
 ```
+
+`ports` is a list of TCP port numbers, or the literal `ANY` (case-insensitive) meaning the resource uses all ports. `ANY` is shown as `ANY` in the listings and exposed in the API as `ports: []` with `ports_any: true`.
 
 ### `config/state.json`
 

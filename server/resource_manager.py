@@ -20,15 +20,39 @@ class ResourceManager:
     def _resource_key(resource_class: str, name: str, enumerator: str) -> str:
         return f"{resource_class}:{name}:{enumerator}"
 
+    @staticmethod
+    def _parse_ports(raw) -> Tuple[List[int], bool]:
+        """Parse the config 'ports' value into (ports, ports_any).
+
+        Accepts a list of port numbers, or the literal ANY (case-insensitive,
+        as a bare value or inside the list) meaning all ports.
+        """
+        if raw is None:
+            return [], False
+        if isinstance(raw, str):
+            if raw.strip().upper() == "ANY":
+                return [], True
+            raise ValueError(f"Invalid ports value: {raw!r}")
+        ports: List[int] = []
+        ports_any = False
+        for p in raw:
+            if isinstance(p, str) and p.strip().upper() == "ANY":
+                ports_any = True
+            else:
+                ports.append(int(p))
+        return ports, ports_any
+
     def _load_config(self, config_file: str):
         with open(config_file) as f:
             config = yaml.safe_load(f)
         for r in config.get("resources", []):
             loc = r["location"]
+            ports, ports_any = self._parse_ports(loc.get("ports", []))
             location = Location(
                 node=loc["node"],
                 user=loc["user"],
-                ports=loc.get("ports", []),
+                ports=ports,
+                ports_any=ports_any,
             )
             resource = Resource(
                 resource_class=r["class"],

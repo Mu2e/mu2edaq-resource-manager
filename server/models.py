@@ -7,6 +7,8 @@ class Location(BaseModel):
     node: str
     user: str
     ports: List[int] = []
+    # True when the config specified ports: ANY (the resource uses all ports).
+    ports_any: bool = False
 
 
 class Resource(BaseModel):
