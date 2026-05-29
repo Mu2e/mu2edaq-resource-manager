@@ -3,6 +3,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace mu2e {
@@ -80,6 +81,14 @@ public:
 
     /** Set or replace the bearer token sent on state-changing requests. */
     void setAuthToken(const std::string& token) { auth_token_ = token; }
+
+    /**
+     * Locate a resource manager via UDP broadcast discovery.
+     * Broadcasts on the given discovery port and waits up to timeout_ms for a
+     * reply. Returns {host, port} of the HTTP API, or std::nullopt on timeout.
+     */
+    static std::optional<std::pair<std::string, int>>
+    discover(int discovery_port = 8088, int timeout_ms = 2000);
 
     // Non-copyable, movable
     ResourceManagerClient(const ResourceManagerClient&)            = delete;

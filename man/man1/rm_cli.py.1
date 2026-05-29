@@ -25,12 +25,15 @@ consecutively on the command line.
 .TP
 .BI \-\-host " HOST"
 Resource manager server hostname or IP address.
-Default:
-.BR localhost .
+If unset (and
+.B RM_HOST
+is not set), the server is located via UDP broadcast discovery, falling back to
+.B localhost
+if none responds.
 .TP
 .BI \-\-port " PORT"
 Resource manager server port.
-Default:
+Default: the discovered port, otherwise
 .BR 8080 .
 .TP
 .BI \-\-token " TOKEN"
@@ -40,6 +43,21 @@ Can also be set via the
 .B RM_TOKEN
 environment variable.
 Read-only commands do not require it.
+.TP
+.BI \-\-discovery\-port " PORT"
+UDP port used for broadcast discovery.
+Default:
+.BR 8088 .
+Can also be set via the
+.B RM_DISCOVERY_PORT
+environment variable.
+.TP
+.B \-\-no\-discover
+Do not attempt broadcast discovery when
+.B \-\-host
+is unset; use
+.B localhost
+instead.
 .SH COMMANDS
 .TP
 .B list

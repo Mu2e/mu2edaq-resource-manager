@@ -3,13 +3,28 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#include <cstring>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
 
+#ifdef _WIN32
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <sys/time.h>
+#  include <unistd.h>
+#endif
+
 using json = nlohmann::json;
 
 namespace mu2e {
+
+// Discovery protocol constant — must match server/discovery.py.
+static const char* kDiscoveryMagic = "MU2E-RM-DISCOVER-V1";
 
 // libcurl global init/cleanup are process-wide lifecycle calls, not per-object.
 // Initialize exactly once for the whole process on first client construction.
@@ -299,6 +314,74 @@ ServerStatus ResourceManagerClient::getStatus()
         j.at("available").get<int>(),
         j.at("reserved").get<int>(),
     };
+}
+
+// ── Discovery ───────────────────────────────────────────────────────────────
+
+std::optional<std::pair<std::string, int>>
+ResourceManagerClient::discover(int discovery_port, int timeout_ms)
+{
+#ifdef _WIN32
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+        return std::nullopt;
+    SOCKET sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == INVALID_SOCKET) { WSACleanup(); return std::nullopt; }
+#else
+    int sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0)
+        return std::nullopt;
+#endif
+
+    int broadcast = 1;
+    ::setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
+                 reinterpret_cast<const char*>(&broadcast), sizeof(broadcast));
+
+#ifdef _WIN32
+    DWORD tv = static_cast<DWORD>(timeout_ms);
+    ::setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&tv), sizeof(tv));
+#else
+    struct timeval tv;
+    tv.tv_sec  = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    ::setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+#endif
+
+    sockaddr_in dest{};
+    dest.sin_family      = AF_INET;
+    dest.sin_port        = htons(static_cast<unsigned short>(discovery_port));
+    dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
+    ::sendto(sock, kDiscoveryMagic, static_cast<int>(std::strlen(kDiscoveryMagic)), 0,
+             reinterpret_cast<sockaddr*>(&dest), sizeof(dest));
+
+    std::optional<std::pair<std::string, int>> result;
+    char buf[1024];
+    for (;;) {
+        int n = static_cast<int>(::recvfrom(sock, buf, sizeof(buf) - 1, 0, nullptr, nullptr));
+        if (n <= 0)
+            break;  // timeout or error
+        buf[n] = '\0';
+        try {
+            auto j = json::parse(buf);
+            if (j.value("service", std::string()) == "mu2e-resource-manager"
+                && j.contains("host") && j.contains("port")) {
+                result = std::make_pair(j.at("host").get<std::string>(),
+                                        j.at("port").get<int>());
+                break;
+            }
+        } catch (...) {
+            continue;
+        }
+    }
+
+#ifdef _WIN32
+    closesocket(sock);
+    WSACleanup();
+#else
+    ::close(sock);
+#endif
+    return result;
 }
 
 } // namespace mu2e

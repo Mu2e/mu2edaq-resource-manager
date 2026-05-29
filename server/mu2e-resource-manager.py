@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from models import Resource, ResourceIdentifier, ReservationRequest, ReleaseRequest, ServerStatus
 from resource_manager import ResourceManager
 from auth import Principal, configure_auth, require_principal, truthy
+from discovery import DEFAULT_DISCOVERY_PORT, DiscoveryResponder
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _WEB_DIR = os.path.join(_HERE, "..", "web")
@@ -192,6 +193,24 @@ def parse_args():
         default=truthy(os.environ.get("RM_AUTH_DISABLED")),
         help="Disable authentication (trusted/local use only)",
     )
+    parser.add_argument(
+        "--discovery-port",
+        type=int,
+        default=int(os.environ.get("RM_DISCOVERY_PORT", DEFAULT_DISCOVERY_PORT)),
+        help=f"UDP port for broadcast discovery (default: {DEFAULT_DISCOVERY_PORT})",
+    )
+    _rm_discovery = os.environ.get("RM_DISCOVERY")
+    parser.add_argument(
+        "--no-discovery",
+        action="store_true",
+        default=(_rm_discovery is not None and not truthy(_rm_discovery)),
+        help="Disable the UDP discovery responder (enabled by default)",
+    )
+    parser.add_argument(
+        "--advertise-host",
+        default=os.environ.get("RM_ADVERTISE_HOST"),
+        help="Host/IP advertised to discovery clients (default: auto-detect)",
+    )
     return parser.parse_args()
 
 
@@ -203,6 +222,17 @@ if __name__ == "__main__":
     configure_auth(args.auth_config, disabled=args.no_auth)
     print(f"Loaded config: {args.config}")
     print(f"State file:    {args.state}")
+
+    if not args.no_discovery:
+        responder = DiscoveryResponder(
+            http_port=args.port,
+            discovery_port=args.discovery_port,
+            advertise_host=args.advertise_host,
+            bind_host=args.host,
+        )
+        responder.start()
+        print(f"Discovery:     UDP port {args.discovery_port} (broadcast)")
+
     uvicorn.run(app, host=args.host, port=args.port)
 else:
     # When imported (e.g., by uvicorn directly), use defaults

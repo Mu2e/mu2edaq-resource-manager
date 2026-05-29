@@ -31,6 +31,10 @@ target_link_libraries(rmclient
         CURL::libcurl
         nlohmann_json::nlohmann_json
 )
+if (WIN32)
+    # Winsock for UDP broadcast discovery.
+    target_link_libraries(rmclient PUBLIC ws2_32)
+endif()
 target_compile_options(rmclient PRIVATE -Wall -Wextra)
 
 # ── rm-cli ───────────────────────────────────────────────────────────────────

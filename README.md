@@ -128,7 +128,7 @@ python3 server/mu2e-resource-manager.py --host 127.0.0.1 --port 8080 \
 
 The server binds to `127.0.0.1` (localhost) by default; set `--host 0.0.0.0` (or `RM_HOST=0.0.0.0`) to expose it on all interfaces, which should only be done with authentication configured (see [Authentication](#authentication)).
 
-**Environment variables:** `RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `RM_VENV`. These can be set in your shell or placed in a `.env` file (see [Configuration](#configuration)).
+**Environment variables:** `RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_DISCOVERY`, `RM_DISCOVERY_PORT`, `RM_ADVERTISE_HOST`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `RM_VENV`. These can be set in your shell or placed in a `.env` file (see [Configuration](#configuration)).
 
 ### Python CLI
 
@@ -160,7 +160,9 @@ python3 cli/rm_cli.py --token "$RM_TOKEN" release-all partition1
 python3 cli/rm_cli.py status
 ```
 
-Use `--host` / `--port` to target a remote server (default: `localhost:8080`), and `--token` (or the `RM_TOKEN` environment variable) for state-changing commands. Read-only commands (`list`, `get`, `status`) need no token. The `reserve` command accepts an optional `--who` (or `RM_WHO`) operator annotation shown in the "Who" column. The C++ CLI (`rm-cli`) takes the same `--token` / `--who` options.
+Use `--host` / `--port` to target a remote server, and `--token` (or the `RM_TOKEN` environment variable) for state-changing commands. Read-only commands (`list`, `get`, `status`) need no token. The `reserve` command accepts an optional `--who` (or `RM_WHO`) operator annotation shown in the "Who" column. The C++ CLI (`rm-cli`) takes the same `--token` / `--who` options.
+
+When `--host` is **not** given (and `RM_HOST` is unset), the CLI locates the server via UDP broadcast discovery and routes to the host/port it returns (see [Discovery](#discovery)); pass `--no-discover` to skip this and fall back to `localhost:8080`.
 
 ### C++ Client Library
 
@@ -209,7 +211,7 @@ Both the shell scripts and the server read a `.env` file in the project root, if
 cp example.env .env
 ```
 
-`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_TOKEN`, `RM_WHO`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
+`example.env` documents every supported variable (`RM_HOST`, `RM_PORT`, `RM_CONFIG`, `RM_STATE`, `RM_AUTH_CONFIG`, `RM_AUTH_DISABLED`, `RM_TOKEN`, `RM_WHO`, `RM_DISCOVERY`, `RM_DISCOVERY_PORT`, `RM_ADVERTISE_HOST`, `RM_DAEMON`, `RM_RUN_DIR`, `RM_PIDFILE`, `RM_LOG`, `RM_STOP_TIMEOUT`, `PYTHON`, `RM_VENV`). A variable already set in your shell environment takes precedence over the value in `.env`, so `.env` acts as a per-checkout default. The `.env` file is git-ignored; `example.env` is the committed template.
 
 ### Authentication
 
@@ -238,6 +240,23 @@ auth:
 Clients send the token as `Authorization: Bearer <token>`. The owner of a reservation is always the authenticated principal — the `client_id` field in request bodies is ignored for authorization. Override the config path with `RM_AUTH_CONFIG`.
 
 If no tokens are configured the server still runs but rejects every state-changing request with `401`. For a trusted, localhost-only deployment you can disable auth entirely with `RM_AUTH_DISABLED=1` (do not do this on an interface reachable beyond localhost).
+
+### Discovery
+
+So clients don't need a hardcoded address, the server runs a small **UDP broadcast discovery** responder (enabled by default). A client with no configured host broadcasts a discovery datagram on the discovery port; the server replies with the host and port of its HTTP API, and the client routes its requests there.
+
+```
+client (no --host)  ──UDP broadcast :8088──▶  server discovery responder
+client              ◀──{host, port} reply───  server
+client ──HTTP──▶ host:port  (normal API calls, with token as needed)
+```
+
+- **Discovery port:** UDP `8088` by default (`--discovery-port` / `RM_DISCOVERY_PORT`); HTTP stays on TCP `8080`. Server and client must agree on the discovery port.
+- **Advertised host:** the server reports `--advertise-host` / `RM_ADVERTISE_HOST` if set; otherwise a concrete `--host`; otherwise its auto-detected primary LAN IP. Set `--advertise-host` explicitly when binding `0.0.0.0` on a multi-homed host.
+- **Disable:** `--no-discovery` / `RM_DISCOVERY=0` on the server; `--no-discover` on a client.
+- Discovery only returns the endpoint location — the HTTP API is still protected by [Authentication](#authentication).
+
+Python and C++ clients discover automatically when no host is configured; you can also call discovery directly: `ResourceManagerClient::discover()` (C++) or the `discover()` helper in `cli/rm_cli.py` (Python).
 
 ### `config/resources.yaml`
 

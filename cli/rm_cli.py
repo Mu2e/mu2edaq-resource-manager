@@ -2,10 +2,42 @@
 """Mu2e DAQ Resource Manager — Command Line Interface"""
 
 import argparse
+import json
 import os
+import socket
 import sys
 
 import requests
+
+# ── UDP broadcast discovery ───────────────────────────────────────────────────
+# Must match server/discovery.py.
+DISCOVERY_MAGIC = b"MU2E-RM-DISCOVER-V1"
+DISCOVERY_SERVICE = "mu2e-resource-manager"
+DEFAULT_DISCOVERY_PORT = 8088
+
+
+def discover(discovery_port: int, timeout: float = 2.0):
+    """Broadcast a discovery request; return (host, port) or None on timeout."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.settimeout(timeout)
+    try:
+        sock.sendto(DISCOVERY_MAGIC, ("255.255.255.255", discovery_port))
+        while True:
+            try:
+                data, _ = sock.recvfrom(1024)
+            except socket.timeout:
+                return None
+            try:
+                msg = json.loads(data.decode())
+            except (ValueError, UnicodeDecodeError):
+                continue
+            if msg.get("service") == DISCOVERY_SERVICE and "host" in msg and "port" in msg:
+                return msg["host"], int(msg["port"])
+    except OSError:
+        return None
+    finally:
+        sock.close()
 
 # ANSI colours (disabled when not a tty)
 _TTY = sys.stdout.isatty()
@@ -168,12 +200,33 @@ Examples:
   %(prog)s status
 """,
     )
-    parser.add_argument("--host", default="localhost", help="Server host (default: localhost)")
-    parser.add_argument("--port", type=int, default=8080, help="Server port (default: 8080)")
+    _env_port = os.environ.get("RM_PORT")
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("RM_HOST"),
+        help="Server host. If unset, the server is located via broadcast discovery.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(_env_port) if _env_port else None,
+        help="Server port (default: discovered, else 8080)",
+    )
     parser.add_argument(
         "--token",
         default=os.environ.get("RM_TOKEN"),
         help="Bearer token for reserve/release (or set RM_TOKEN)",
+    )
+    parser.add_argument(
+        "--discovery-port",
+        type=int,
+        default=int(os.environ.get("RM_DISCOVERY_PORT", DEFAULT_DISCOVERY_PORT)),
+        help=f"UDP discovery port (default: {DEFAULT_DISCOVERY_PORT})",
+    )
+    parser.add_argument(
+        "--no-discover",
+        action="store_true",
+        help="Do not attempt broadcast discovery when --host is unset",
     )
 
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
@@ -208,7 +261,24 @@ Examples:
     sub.add_parser("status", help="Show server status")
 
     args = parser.parse_args()
-    cli = CLI(args.host, args.port, token=args.token)
+
+    # Resolve the endpoint: explicit --host/RM_HOST wins; otherwise discover.
+    host, port = args.host, args.port
+    if host is None and not args.no_discover:
+        found = discover(args.discovery_port)
+        if found:
+            host, discovered_port = found
+            if port is None:
+                port = discovered_port
+            print(f"{YELLOW}Discovered resource manager at {host}:{port}{RESET}", file=sys.stderr)
+        else:
+            print(f"{YELLOW}Discovery found no server; falling back to localhost.{RESET}", file=sys.stderr)
+    if host is None:
+        host = "localhost"
+    if port is None:
+        port = 8080
+
+    cli = CLI(host, port, token=args.token)
 
     dispatch = {
         "list": cli.cmd_list,

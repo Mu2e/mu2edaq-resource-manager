@@ -14,6 +14,11 @@ mu2edaq\-resource\-manager \- Mu2e DAQ hardware resource reservation server
 .RB [ \-\-auth\-config
 .IR FILE ]
 .RB [ \-\-no\-auth ]
+.RB [ \-\-discovery\-port
+.IR PORT ]
+.RB [ \-\-no\-discovery ]
+.RB [ \-\-advertise\-host
+.IR HOST ]
 .PP
 .B scripts/start_server.sh
 .RB [ \-d | \-\-daemon ]
@@ -129,6 +134,29 @@ Disable authentication entirely. Intended for trusted, localhost-only use.
 Can also be enabled via a truthy
 .B RM_AUTH_DISABLED
 environment variable.
+.TP
+.BI \-\-discovery\-port " PORT"
+UDP port for the broadcast discovery responder.
+Default:
+.BR 8088 .
+Can also be set via the
+.B RM_DISCOVERY_PORT
+environment variable.
+.TP
+.B \-\-no\-discovery
+Disable the UDP discovery responder (enabled by default).
+Can also be disabled via a falsy
+.B RM_DISCOVERY
+environment variable.
+.TP
+.BI \-\-advertise\-host " HOST"
+Host or IP advertised to discovery clients.
+Default: auto-detected (a concrete
+.B \-\-host
+if set, otherwise the primary LAN IP).
+Can also be set via the
+.B RM_ADVERTISE_HOST
+environment variable.
 .SH AUTHENTICATION
 The state-changing endpoints
 .RB ( POST " " /api/reserve ", " POST " " /api/release ", "
@@ -151,6 +179,24 @@ The owner of a reservation is always the authenticated principal; the
 field in request bodies is ignored for authorization.
 If no tokens are configured, state-changing requests are rejected with
 .BR 401 .
+.SH DISCOVERY
+By default the server runs a UDP broadcast discovery responder so that clients
+without a configured host can locate it. A client broadcasts a datagram to the
+discovery port; the server replies with a JSON object giving the
+.I host
+and
+.I port
+of its HTTP API, and the client routes its requests there. The advertised
+host is
+.B \-\-advertise\-host
+if set, otherwise a concrete
+.BR \-\-host ,
+otherwise the auto-detected primary LAN IP. Discovery only reveals the endpoint
+location; the API itself remains protected by authentication. Disable the
+responder with
+.B \-\-no\-discovery
+or a falsy
+.BR RM_DISCOVERY .
 .SH ENVIRONMENT
 .TP
 .B RM_HOST
@@ -177,6 +223,19 @@ Default auth token config path (overridden by
 If set to a truthy value (1, true, yes, on), disable authentication
 (equivalent to
 .BR \-\-no\-auth ).
+.TP
+.B RM_DISCOVERY
+If set to a falsy value (0, false, no, off), disable the discovery responder
+(equivalent to
+.BR \-\-no\-discovery ).
+.TP
+.B RM_DISCOVERY_PORT
+Default UDP discovery port (overridden by
+.BR \-\-discovery\-port ).
+.TP
+.B RM_ADVERTISE_HOST
+Default advertised host (overridden by
+.BR \-\-advertise\-host ).
 .TP
 .B RM_DAEMON
 If set to a truthy value (1, true, yes, on), start in daemon mode without

@@ -74,9 +74,13 @@ static void printResource(const Resource& r)
 static void printUsage(const char* prog)
 {
     std::cerr
-        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] [--who NAME] COMMAND [args]\n\n"
-        << "  --token TOKEN  Bearer token for reserve/release (or set RM_TOKEN)\n"
-        << "  --who NAME     Optional operator annotation shown in the 'Who' column (or set RM_WHO)\n\n"
+        << "Usage: " << prog << " [--host HOST] [--port PORT] [--token TOKEN] [--who NAME]\n"
+        << "            [--discovery-port PORT] [--no-discover] COMMAND [args]\n\n"
+        << "  --host HOST        Server host. If unset, located via broadcast discovery.\n"
+        << "  --token TOKEN      Bearer token for reserve/release (or set RM_TOKEN)\n"
+        << "  --who NAME         Optional operator annotation ('Who' column; or set RM_WHO)\n"
+        << "  --discovery-port P UDP discovery port (default 8088; or set RM_DISCOVERY_PORT)\n"
+        << "  --no-discover      Do not broadcast-discover when --host is unset\n\n"
         << "Commands:\n"
         << "  list [--status available|reserved]     List resources\n"
         << "  get  <class> <name> <enum>             Get a specific resource\n"
@@ -111,14 +115,18 @@ parseTriples(const std::vector<std::string>& tokens, size_t start)
 
 int main(int argc, char* argv[])
 {
-    std::string host = "localhost";
-    int         port = 8080;
+    std::string host;
+    bool        hostSet = false;
+    int         port = 0;
+    int         discoveryPort = 8088;
+    bool        noDiscover = false;
     std::string token;
-    if (const char* envTok = std::getenv("RM_TOKEN"))
-        token = envTok;
     std::string who;
-    if (const char* envWho = std::getenv("RM_WHO"))
-        who = envWho;
+    if (const char* envHost = std::getenv("RM_HOST")) { host = envHost; hostSet = true; }
+    if (const char* envPort = std::getenv("RM_PORT")) port = std::stoi(envPort);
+    if (const char* envDp = std::getenv("RM_DISCOVERY_PORT")) discoveryPort = std::stoi(envDp);
+    if (const char* envTok = std::getenv("RM_TOKEN")) token = envTok;
+    if (const char* envWho = std::getenv("RM_WHO")) who = envWho;
 
     // Collect raw args
     std::vector<std::string> args(argv + 1, argv + argc);
@@ -128,17 +136,35 @@ int main(int argc, char* argv[])
     while (i < args.size() && args[i].rfind("--", 0) == 0) {
         if (args[i] == "--host" && i + 1 < args.size()) {
             host = args[++i];
+            hostSet = true;
         } else if (args[i] == "--port" && i + 1 < args.size()) {
             port = std::stoi(args[++i]);
         } else if (args[i] == "--token" && i + 1 < args.size()) {
             token = args[++i];
         } else if (args[i] == "--who" && i + 1 < args.size()) {
             who = args[++i];
+        } else if (args[i] == "--discovery-port" && i + 1 < args.size()) {
+            discoveryPort = std::stoi(args[++i]);
+        } else if (args[i] == "--no-discover") {
+            noDiscover = true;
         } else {
             break;
         }
         ++i;
     }
+
+    // Locate the server via broadcast discovery when --host is not set.
+    if (!hostSet && !noDiscover) {
+        auto found = ResourceManagerClient::discover(discoveryPort);
+        if (found) {
+            host = found->first;
+            if (port == 0) port = found->second;
+            std::cerr << YELLOW << "Discovered resource manager at "
+                      << host << ":" << port << RESET << '\n';
+        }
+    }
+    if (host.empty()) host = "localhost";
+    if (port == 0)    port = 8080;
 
     if (i >= args.size()) {
         printUsage(argv[0]);
