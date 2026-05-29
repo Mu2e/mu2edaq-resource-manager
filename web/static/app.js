@@ -6,6 +6,9 @@ let _autoRefreshTimer = null;
 // principal = the resource owner; role = client|operator.
 let _identity = { principal: null, role: null };
 
+// Per-category collapse state; persisted in sessionStorage.
+let _collapsed = {};
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 // Display port list as "first-last" (or just the single port if only one).
@@ -13,6 +16,32 @@ function formatPorts(ports) {
   if (!ports || ports.length === 0) return '';
   const sorted = [...ports].sort((a, b) => a - b);
   return sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
+}
+
+// Strip trailing numeric suffix so "CALO-1" and "CALO-8" share category "CALO".
+function categoryKey(cls) {
+  return cls.replace(/-\d+$/, '');
+}
+
+function loadCollapsed() {
+  try { _collapsed = JSON.parse(sessionStorage.getItem('rm_collapsed') || '{}'); }
+  catch (_) { _collapsed = {}; }
+}
+
+function saveCollapsed() {
+  sessionStorage.setItem('rm_collapsed', JSON.stringify(_collapsed));
+}
+
+function toggleCategory(key) {
+  _collapsed[key] = !_collapsed[key];
+  saveCollapsed();
+  // Toggle visibility of all data rows belonging to this category.
+  document.querySelectorAll(`tr[data-category="${CSS.escape(key)}"]`).forEach(row => {
+    row.style.display = _collapsed[key] ? 'none' : '';
+  });
+  // Flip the arrow on the header row.
+  const hdr = document.querySelector(`tr.group-header[data-key="${CSS.escape(key)}"]`);
+  if (hdr) hdr.querySelector('.group-arrow').textContent = _collapsed[key] ? '▶' : '▼';
 }
 
 // Free-text operator annotation (the "Operator" field / "Who" column).
@@ -114,38 +143,63 @@ async function loadResources() {
       return;
     }
 
-    tbody.innerHTML = resources.map(r => {
-      const ports      = r.location.ports_any ? 'ANY' : formatPorts(r.location.ports);
-      const statusCls  = `status-${r.status}`;
-      const ownerCell  = r.owner ? `<span class="owner-cell">${esc(r.owner)}</span>` : '<span class="cell-muted">—</span>';
-      const whoCell    = r.who ? esc(r.who) : '<span class="cell-muted">—</span>';
-      // The owner is the authenticated principal; an operator may release any.
-      const canRelease = _identity.role === 'operator' || r.owner === _identity.principal;
-      let   actionCell = '';
+    // Group resources by category key, preserving server order within each group.
+    const groups = new Map();
+    for (const r of resources) {
+      const key = categoryKey(r.resource_class);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    }
 
-      if (r.status === 'available') {
-        actionCell = `<button class="btn btn-reserve"
-          onclick="reserve(${esc(JSON.stringify(r.resource_class))},${esc(JSON.stringify(r.name))},${esc(JSON.stringify(r.enumerator))})">
-          Reserve</button>`;
-      } else if (canRelease) {
-        actionCell = `<button class="btn btn-release"
-          onclick="release(${esc(JSON.stringify(r.resource_class))},${esc(JSON.stringify(r.name))},${esc(JSON.stringify(r.enumerator))})">
-          Release</button>`;
+    const rows = [];
+    for (const [key, members] of groups) {
+      const collapsed = !!_collapsed[key];
+      const arrow = collapsed ? '▶' : '▼';
+      const total = members.length;
+      const avail = members.filter(r => r.status === 'available').length;
+      const resvd = total - avail;
+      const summary = `${total} resource${total !== 1 ? 's' : ''} — `
+        + `<span class="status-available">${avail} available</span>, `
+        + `<span class="status-reserved">${resvd} reserved</span>`;
+      rows.push(`<tr class="group-header" data-key="${esc(key)}" onclick="toggleCategory(${esc(JSON.stringify(key))})">
+        <td colspan="10">
+          <span class="group-arrow">${arrow}</span>
+          <span class="group-label">${esc(key)}</span>
+          <span class="group-summary">${summary}</span>
+        </td>
+      </tr>`);
+
+      for (const r of members) {
+        const ports      = r.location.ports_any ? 'ANY' : formatPorts(r.location.ports);
+        const statusCls  = `status-${r.status}`;
+        const ownerCell  = r.owner ? `<span class="owner-cell">${esc(r.owner)}</span>` : '<span class="cell-muted">—</span>';
+        const whoCell    = r.who ? esc(r.who) : '<span class="cell-muted">—</span>';
+        const canRelease = _identity.role === 'operator' || r.owner === _identity.principal;
+        let   actionCell = '';
+        if (r.status === 'available') {
+          actionCell = `<button class="btn btn-reserve"
+            onclick="event.stopPropagation();reserve(${esc(JSON.stringify(r.resource_class))},${esc(JSON.stringify(r.name))},${esc(JSON.stringify(r.enumerator))})">
+            Reserve</button>`;
+        } else if (canRelease) {
+          actionCell = `<button class="btn btn-release"
+            onclick="event.stopPropagation();release(${esc(JSON.stringify(r.resource_class))},${esc(JSON.stringify(r.name))},${esc(JSON.stringify(r.enumerator))})">
+            Release</button>`;
+        }
+        rows.push(`<tr data-category="${esc(key)}"${collapsed ? ' style="display:none"' : ''}>
+          <td>${esc(r.resource_class)}</td>
+          <td>${esc(r.name)}</td>
+          <td>${esc(r.enumerator)}</td>
+          <td class="node-cell">${esc(r.location.node)}</td>
+          <td>${esc(r.location.user)}</td>
+          <td class="ports-cell">${esc(ports)}</td>
+          <td class="${statusCls}">${esc(r.status)}</td>
+          <td>${ownerCell}</td>
+          <td>${whoCell}</td>
+          <td>${actionCell}</td>
+        </tr>`);
       }
-
-      return `<tr>
-        <td>${esc(r.resource_class)}</td>
-        <td>${esc(r.name)}</td>
-        <td>${esc(r.enumerator)}</td>
-        <td class="node-cell">${esc(r.location.node)}</td>
-        <td>${esc(r.location.user)}</td>
-        <td class="ports-cell">${esc(ports)}</td>
-        <td class="${statusCls}">${esc(r.status)}</td>
-        <td>${ownerCell}</td>
-        <td>${whoCell}</td>
-        <td>${actionCell}</td>
-      </tr>`;
-    }).join('');
+    }
+    tbody.innerHTML = rows.join('');
 
     document.getElementById('last-updated').textContent =
       'Updated: ' + new Date().toLocaleTimeString();
@@ -209,6 +263,7 @@ function toggleAutoRefresh() {
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 window.addEventListener('load', () => {
+  loadCollapsed();
   // Restore and persist the bearer token across reloads (sessionStorage so it
   // is cleared when the tab closes).
   const tokenInput = document.getElementById('token-input');

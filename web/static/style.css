@@ -147,6 +147,20 @@ tr:hover td { background: #1c2128; }
 .ports-cell { color: var(--muted);  font-size: 0.8rem; }
 .node-cell  { font-size: 0.85rem; }
 
+/* ── Collapsible group headers ── */
+tr.group-header td {
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+tr.group-header:hover td { background: #2d333b; }
+.group-arrow { color: var(--muted); font-size: 0.7rem; margin-right: 8px; }
+.group-label { color: var(--accent); font-weight: bold; font-size: 0.85rem; margin-right: 14px; letter-spacing: 0.04em; text-transform: uppercase; }
+.group-summary { color: var(--muted); font-size: 0.8rem; }
+
 /* ── Footer ── */
 footer {
   background: var(--surface);
