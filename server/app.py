@@ -138,6 +138,15 @@ if __name__ == "__main__":
     rm = ResourceManager(args.config, args.state)
     print(f"Loaded config: {args.config}")
     print(f"State file:    {args.state}")
+
+    # Announce via mu2edaq-discovery (optional dependency).
+    try:
+        from mu2edaq_discovery import Responder
+        Responder(name="Resource Manager", app="resource-manager",
+                  port=args.port, scheme="http").start()
+    except ImportError:
+        print("mu2edaq-discovery not installed; discovery disabled")
+
     uvicorn.run(app, host=args.host, port=args.port)
 else:
     # When imported (e.g., by uvicorn directly), use defaults
