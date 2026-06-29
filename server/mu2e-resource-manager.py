@@ -233,7 +233,25 @@ if __name__ == "__main__":
         responder.start()
         print(f"Discovery:     UDP port {args.discovery_port} (broadcast)")
 
-    uvicorn.run(app, host=args.host, port=args.port)
+    # Mu2e DAQ service discovery (standard multicast protocol): advertise the
+    # HTTP port so the app appears in mu2edaq-discover scans and the control
+    # room browser. Separate from the resource manager's own UDP broadcast
+    # discovery above. Best-effort so a missing package never blocks startup.
+    mu2e_responder = None
+    try:
+        from mu2edaq_discovery import Responder
+        mu2e_responder = Responder(name="Resource Manager",
+                                   app="resource-manager",
+                                   port=args.port, scheme="http")
+        mu2e_responder.start()
+    except Exception as exc:
+        print(f"[Discovery] mu2edaq responder not started: {exc}")
+
+    try:
+        uvicorn.run(app, host=args.host, port=args.port)
+    finally:
+        if mu2e_responder is not None:
+            mu2e_responder.stop()
 else:
     # When imported (e.g., by uvicorn directly), use defaults
     rm = ResourceManager(
