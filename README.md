@@ -50,7 +50,7 @@ Each resource is identified by a triple: `class:name:enumerator` (e.g., `DTC:DTC
 
 ### Server
 
-**Requirements:** Python 3.10+, `fastapi`, `uvicorn`, `pyyaml`
+**Requirements:** Python 3.9+, `fastapi`, `uvicorn`, `pyyaml`
 
 ```bash
 pip install -r requirements.txt
