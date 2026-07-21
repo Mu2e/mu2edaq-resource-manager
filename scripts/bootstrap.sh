@@ -42,6 +42,12 @@ fi
 echo "Upgrading pip"
 "$VENV_PY" -m pip install --upgrade pip
 
+# Prefer the sibling submodule checkout of mu2edaq-discovery when present.
+if [ -d "$PROJECT_DIR/../mu2edaq-discovery" ]; then
+    echo "Installing mu2edaq-discovery from sibling checkout"
+    "$VENV_PY" -m pip install -e "$PROJECT_DIR/../mu2edaq-discovery"
+fi
+
 if [ -f "$REQUIREMENTS" ]; then
     echo "Installing dependencies from $REQUIREMENTS"
     "$VENV_PY" -m pip install --upgrade -r "$REQUIREMENTS"
